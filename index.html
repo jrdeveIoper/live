@@ -32,8 +32,6 @@
         .user-btn.admin-user{border:1px solid #ff3b30}
         .user-btn.admin-locked{opacity:0.5;cursor:not-allowed;border-color:#555}
         .user-btn.disabled{opacity:0.3;cursor:not-allowed}
-        .user-btn .remove-user-btn{background:rgba(255,50,50,0.3);border:none;color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;cursor:pointer;margin-left:4px;padding:0;line-height:16px;text-align:center;transition:.2s}
-        .user-btn .remove-user-btn:hover{background:rgba(255,50,50,0.7)}
         .chat-box{flex:1;overflow-y:auto;padding:10px 14px;background:#121212;display:flex;flex-direction:column;gap:2px;min-height:0}
         .chat-box::-webkit-scrollbar{width:3px}
         .chat-box::-webkit-scrollbar-track{background:transparent}
@@ -101,6 +99,8 @@
         .user-tag .remove-btn{background:rgba(255,50,50,0.3);border:none;color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;cursor:pointer;padding:0;line-height:16px;text-align:center;transition:.2s}
         .user-tag .remove-btn:hover{background:rgba(255,50,50,0.7)}
         .broadcast-indicator{background:#8b5cf6;color:#fff;font-size:9px;padding:2px 10px;border-radius:12px;margin-left:6px}
+        .refresh-users-btn{background:#2a2a2a;border:1px solid #555;color:#aaa;padding:3px 10px;border-radius:16px;font-size:10px;cursor:pointer;margin-left:6px}
+        .refresh-users-btn:hover{background:#3a3a3a;color:#fff}
         @media(max-width:500px){.container{height:100%;border-radius:0}.msg{max-width:85%;font-size:13px}.input-area input{font-size:14px}}
     </style>
 </head>
@@ -153,7 +153,9 @@
         <button class="btn btn-primary" onclick="verifyAdmin()">✅ Verify</button>
         <div id="adminStatus" style="margin-top:4px;font-size:11px;color:#888;"></div>
         <div id="userManagement" style="margin-top:8px;display:none;">
-            <strong style="color:#fff;font-size:12px;">👥 Manage Users</strong>
+            <strong style="color:#fff;font-size:12px;">👥 Manage Users 
+                <button class="refresh-users-btn" onclick="refreshUserList()">🔄 Refresh</button>
+            </strong>
             <div id="userListTags" class="user-management"></div>
             <p style="color:#555;font-size:10px;margin-top:4px;">Click ✕ to remove user (their messages will be deleted)</p>
         </div>
@@ -497,6 +499,13 @@
             document.getElementById('adminStatus').style.color = '#ff3b30';
             i.value = '';
         }
+    }
+
+    // ========== 🔄 REFRESH USER LIST ==========
+    function refreshUserList() {
+        if (!isAdmin) return;
+        renderUserTags();
+        showStatus('🔄 User list refreshed!', 'success');
     }
 
     // ========== 👥 USER MANAGEMENT - DELETE USER (FIXED) ==========
