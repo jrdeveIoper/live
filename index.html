@@ -1,359 +1,17 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>SnapChat - E2EE</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SnapChat</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: #0a0a0a;
-            color: #fff;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 10px;
-        }
-        .container {
-            max-width: 500px;
-            width: 100%;
-            height: 95vh;
-            background: #121212;
-            border-radius: 24px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 0 40px rgba(0,0,0,0.8);
-            border: 1px solid #2a2a2a;
-            position: relative;
-        }
-
-        /* ========== HEADER ========== */
-        .header {
-            padding: 14px 18px;
-            background: #1a1a1a;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #2a2a2a;
-            flex-shrink: 0;
-        }
-        .header h1 {
-            font-size: 18px;
-            font-weight: 700;
-            color: #fff;
-            letter-spacing: -0.3px;
-        }
-        .header h1 span { color: #fffc00; }
-        .header-controls {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
-        .header-controls .btn {
-            background: #2a2a2a;
-            border: none;
-            color: #aaa;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            cursor: pointer;
-            transition: 0.2s;
-            touch-action: manipulation;
-        }
-        .header-controls .btn:hover { background: #3a3a3a; color: #fff; }
-        .header-controls .btn-warning { background: #fffc00; color: #000; }
-        .header-controls .btn-warning:hover { background: #e6e600; }
-        .header-controls .btn-danger { background: #ff3b30; color: #fff; }
-        .header-controls .btn-danger:hover { background: #e0352b; }
-        .notification-dot {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background: #ff3b30;
-            border-radius: 50%;
-            margin-left: 4px;
-            animation: pulse 1s infinite;
-        }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-
-        /* ========== USER SELECTOR ========== */
-        .user-selector {
-            display: flex;
-            gap: 6px;
-            padding: 8px 14px;
-            background: #1a1a1a;
-            border-bottom: 1px solid #2a2a2a;
-            flex-shrink: 0;
-            overflow-x: auto;
-            flex-wrap: nowrap;
-        }
-        .user-selector::-webkit-scrollbar { display: none; }
-        .user-btn {
-            padding: 5px 14px;
-            border: none;
-            border-radius: 20px;
-            font-size: 13px;
-            background: #2a2a2a;
-            color: #888;
-            cursor: pointer;
-            transition: 0.2s;
-            white-space: nowrap;
-            touch-action: manipulation;
-        }
-        .user-btn.active {
-            background: #007aff;
-            color: #fff;
-        }
-        .user-btn.admin-user { border: 1px solid #ff3b30; }
-        .user-btn:active { opacity: 0.7; }
-
-        /* ========== CHAT BOX ========== */
-        .chat-box {
-            flex: 1;
-            overflow-y: auto;
-            padding: 12px 14px;
-            background: #121212;
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-        .chat-box::-webkit-scrollbar { width: 3px; }
-        .chat-box::-webkit-scrollbar-track { background: transparent; }
-        .chat-box::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 10px; }
-
-        /* ========== MESSAGES ========== */
-        .msg {
-            max-width: 78%;
-            padding: 6px 12px;
-            border-radius: 18px;
-            font-size: 14px;
-            line-height: 1.4;
-            word-break: break-word;
-            animation: fadeIn 0.2s ease;
-            position: relative;
-            margin-bottom: 1px;
-        }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
-
-        .msg.aish {
-            background: #007aff;
-            color: #fff;
-            align-self: flex-start;
-            border-bottom-left-radius: 4px;
-        }
-        .msg.user1 {
-            background: #2c2c2e;
-            color: #fff;
-            align-self: flex-end;
-            border-bottom-right-radius: 4px;
-        }
-        .msg.system {
-            background: transparent;
-            color: #555;
-            font-size: 11px;
-            text-align: center;
-            max-width: 100%;
-            padding: 4px 0;
-            align-self: center;
-        }
-
-        .msg .sender {
-            font-size: 10px;
-            font-weight: 600;
-            opacity: 0.7;
-            margin-bottom: 1px;
-            letter-spacing: 0.2px;
-        }
-        .msg .sender .admin-badge {
-            background: #ff3b30;
-            color: #fff;
-            font-size: 8px;
-            padding: 0 6px;
-            border-radius: 10px;
-            margin-left: 4px;
-        }
-        .msg .text-content {
-            font-size: 14px;
-            line-height: 1.4;
-        }
-        .msg .text-content a {
-            color: inherit;
-            text-decoration: underline;
-            opacity: 0.9;
-        }
-        .msg .time-row {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 4px;
-            margin-top: 2px;
-            font-size: 9px;
-            opacity: 0.5;
-        }
-        .msg .time-row .delete-btn {
-            background: rgba(255, 255, 255, 0.15);
-            border: none;
-            color: #fff;
-            padding: 0 6px;
-            border-radius: 10px;
-            font-size: 9px;
-            cursor: pointer;
-            transition: 0.2s;
-            touch-action: manipulation;
-        }
-        .msg .time-row .delete-btn:hover { background: rgba(255, 50, 50, 0.4); }
-        .msg .e2ee-badge {
-            font-size: 8px;
-            opacity: 0.4;
-            margin-left: 4px;
-        }
-
-        /* ========== INPUT AREA ========== */
-        .input-area {
-            padding: 10px 14px 14px;
-            background: #1a1a1a;
-            border-top: 1px solid #2a2a2a;
-            display: flex;
-            gap: 8px;
-            flex-shrink: 0;
-        }
-        .input-area input {
-            flex: 1;
-            padding: 10px 16px;
-            background: #2a2a2a;
-            border: none;
-            border-radius: 24px;
-            color: #fff;
-            font-size: 15px;
-            outline: none;
-            transition: 0.2s;
-        }
-        .input-area input::placeholder { color: #666; }
-        .input-area input:focus { background: #333; }
-        .input-area button {
-            padding: 10px 18px;
-            background: #007aff;
-            border: none;
-            border-radius: 24px;
-            color: #fff;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-            touch-action: manipulation;
-            white-space: nowrap;
-        }
-        .input-area button:active { transform: scale(0.95); }
-        .input-area button:disabled {
-            opacity: 0.4;
-            pointer-events: none;
-        }
-
-        /* ========== POPUP BOXES ========== */
-        .popup-box {
-            display: none;
-            background: #1a1a1a;
-            padding: 14px 16px;
-            border-bottom: 1px solid #2a2a2a;
-            flex-shrink: 0;
-        }
-        .popup-box.show { display: block; }
-        .popup-box strong { color: #fff; font-size: 14px; }
-        .popup-box p { color: #888; font-size: 12px; margin: 4px 0 8px; }
-        .popup-box input {
-            width: 100%;
-            padding: 10px 14px;
-            background: #2a2a2a;
-            border: none;
-            border-radius: 24px;
-            color: #fff;
-            font-size: 14px;
-            outline: none;
-            margin-bottom: 8px;
-        }
-        .popup-box input::placeholder { color: #666; }
-        .popup-box .btn {
-            padding: 8px 18px;
-            border: none;
-            border-radius: 24px;
-            font-size: 13px;
-            cursor: pointer;
-            touch-action: manipulation;
-        }
-        .popup-box .btn-primary { background: #007aff; color: #fff; }
-        .popup-box .btn-success { background: #34c759; color: #fff; }
-        .popup-box .btn-danger { background: #ff3b30; color: #fff; }
-        .popup-box .btn-secondary { background: #2a2a2a; color: #aaa; }
-        .popup-box .btn-warning { background: #fffc00; color: #000; }
-        .request-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #2a2a2a;
-            padding: 8px 12px;
-            border-radius: 16px;
-            margin-bottom: 6px;
-        }
-        .request-item .name { font-weight: 600; color: #fff; font-size: 13px; }
-        .request-item .id { font-size: 10px; color: #666; margin-left: 6px; }
-        .request-item .time { font-size: 10px; color: #555; }
-        .request-item .actions { display: flex; gap: 4px; }
-
-        /* ========== STATUS BAR ========== */
-        .status-bar {
-            display: flex;
-            justify-content: space-between;
-            padding: 4px 14px;
-            background: #121212;
-            font-size: 11px;
-            color: #555;
-            border-bottom: 1px solid #2a2a2a;
-            flex-shrink: 0;
-        }
-        .status-dot {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin-right: 4px;
-        }
-        .status-dot.online { background: #34c759; }
-        .status-dot.offline { background: #ff3b30; }
-
-        /* ========== CONTACT ========== */
-        .contact-section {
-            padding: 8px 14px;
-            background: #121212;
-            border-top: 1px solid #2a2a2a;
-            text-align: center;
-            font-size: 11px;
-            color: #555;
-            flex-shrink: 0;
-        }
-        .contact-section a {
-            color: #007aff;
-            text-decoration: none;
-            margin: 0 6px;
-        }
-        .contact-section a:hover { text-decoration: underline; }
-
-        /* ========== RESPONSIVE ========== */
-        @media (max-width: 500px) {
-            body { padding: 0; }
-            .container { height: 100vh; border-radius: 0; }
-            .msg { max-width: 85%; font-size: 13px; }
-            .input-area input { font-size: 14px; }
-        }
+        /* --- MINIFIED CSS --- */
+        *{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0a0a;color:#fff;height:100vh;display:flex;justify-content:center;align-items:center;padding:10px}.container{max-width:500px;width:100%;height:95vh;background:#121212;border-radius:24px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 0 40px rgba(0,0,0,0.8);border:1px solid #2a2a2a}.header{padding:14px 18px;background:#1a1a1a;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #2a2a2a;flex-shrink:0}.header h1{font-size:18px;font-weight:700;color:#fff;letter-spacing:-0.3px}.header h1 span{color:#fffc00}.header-controls{display:flex;gap:6px;flex-wrap:wrap}.header-controls .btn{background:#2a2a2a;border:none;color:#aaa;padding:5px 10px;border-radius:20px;font-size:11px;cursor:pointer;transition:0.2s}.header-controls .btn:hover{background:#3a3a3a;color:#fff}.header-controls .btn-warning{background:#fffc00;color:#000}.header-controls .btn-warning:hover{background:#e6e600}.header-controls .btn-danger{background:#ff3b30;color:#fff}.header-controls .btn-danger:hover{background:#e0352b}.notification-dot{display:inline-block;width:8px;height:8px;background:#ff3b30;border-radius:50%;margin-left:4px;animation:pulse 1s infinite}@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}.user-selector{display:flex;gap:6px;padding:8px 14px;background:#1a1a1a;border-bottom:1px solid #2a2a2a;flex-shrink:0;overflow-x:auto;flex-wrap:nowrap}.user-selector::-webkit-scrollbar{display:none}.user-btn{padding:5px 14px;border:none;border-radius:20px;font-size:13px;background:#2a2a2a;color:#888;cursor:pointer;transition:0.2s;white-space:nowrap}.user-btn.active{background:#007aff;color:#fff}.user-btn.admin-user{border:1px solid #ff3b30}.chat-box{flex:1;overflow-y:auto;padding:12px 14px;background:#121212;display:flex;flex-direction:column;gap:2px}.chat-box::-webkit-scrollbar{width:3px}.chat-box::-webkit-scrollbar-track{background:transparent}.chat-box::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:10px}.msg{max-width:78%;padding:6px 12px;border-radius:18px;font-size:14px;line-height:1.4;word-break:break-word;animation:fadeIn .2s ease;margin-bottom:1px}@keyframes fadeIn{from{opacity:0;transform:scale(0.96)}to{opacity:1;transform:scale(1)}}.msg.aish{background:#007aff;color:#fff;align-self:flex-start;border-bottom-left-radius:4px}.msg.user1{background:#2c2c2e;color:#fff;align-self:flex-end;border-bottom-right-radius:4px}.msg.system{background:transparent;color:#555;font-size:11px;text-align:center;max-width:100%;padding:4px 0;align-self:center}.msg .sender{font-size:10px;font-weight:600;opacity:0.7;margin-bottom:1px;letter-spacing:.2px}.msg .sender .admin-badge{background:#ff3b30;color:#fff;font-size:8px;padding:0 6px;border-radius:10px;margin-left:4px}.msg .text-content{font-size:14px;line-height:1.4}.msg .text-content a{color:inherit;text-decoration:underline;opacity:.9}.msg .time-row{display:flex;align-items:center;justify-content:flex-end;gap:4px;margin-top:2px;font-size:9px;opacity:.5}.msg .time-row .delete-btn{background:rgba(255,255,255,0.15);border:none;color:#fff;padding:0 6px;border-radius:10px;font-size:9px;cursor:pointer;transition:.2s}.msg .time-row .delete-btn:hover{background:rgba(255,50,50,0.4)}.msg .e2ee-badge{font-size:8px;opacity:.4;margin-left:4px}.input-area{padding:10px 14px 14px;background:#1a1a1a;border-top:1px solid #2a2a2a;display:flex;gap:8px;flex-shrink:0}.input-area input{flex:1;padding:10px 16px;background:#2a2a2a;border:none;border-radius:24px;color:#fff;font-size:15px;outline:none;transition:.2s}.input-area input::placeholder{color:#666}.input-area input:focus{background:#333}.input-area button{padding:10px 18px;background:#007aff;border:none;border-radius:24px;color:#fff;font-size:15px;font-weight:600;cursor:pointer;transition:.2s;white-space:nowrap}.input-area button:active{transform:scale(.95)}.input-area button:disabled{opacity:.4;pointer-events:none}.popup-box{display:none;background:#1a1a1a;padding:14px 16px;border-bottom:1px solid #2a2a2a;flex-shrink:0}.popup-box.show{display:block}.popup-box strong{color:#fff;font-size:14px}.popup-box p{color:#888;font-size:12px;margin:4px 0 8px}.popup-box input{width:100%;padding:10px 14px;background:#2a2a2a;border:none;border-radius:24px;color:#fff;font-size:14px;outline:none;margin-bottom:8px}.popup-box input::placeholder{color:#666}.popup-box .btn{padding:8px 18px;border:none;border-radius:24px;font-size:13px;cursor:pointer}.popup-box .btn-primary{background:#007aff;color:#fff}.popup-box .btn-success{background:#34c759;color:#fff}.popup-box .btn-danger{background:#ff3b30;color:#fff}.popup-box .btn-secondary{background:#2a2a2a;color:#aaa}.popup-box .btn-warning{background:#fffc00;color:#000}.request-item{display:flex;justify-content:space-between;align-items:center;background:#2a2a2a;padding:8px 12px;border-radius:16px;margin-bottom:6px}.request-item .name{font-weight:600;color:#fff;font-size:13px}.request-item .id{font-size:10px;color:#666;margin-left:6px}.request-item .time{font-size:10px;color:#555}.request-item .actions{display:flex;gap:4px}.status-bar{display:flex;justify-content:space-between;padding:4px 14px;background:#121212;font-size:11px;color:#555;border-bottom:1px solid #2a2a2a;flex-shrink:0}.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}.status-dot.online{background:#34c759}.status-dot.offline{background:#ff3b30}.contact-section{padding:8px 14px;background:#121212;border-top:1px solid #2a2a2a;text-align:center;font-size:11px;color:#555;flex-shrink:0}.contact-section a{color:#007aff;text-decoration:none;margin:0 6px}.contact-section a:hover{text-decoration:underline}@media(max-width:500px){body{padding:0}.container{height:100vh;border-radius:0}.msg{max-width:85%;font-size:13px}.input-area input{font-size:14px}}
     </style>
 </head>
 <body>
 
-<div class="container">
-
-    <!-- ========== HEADER ========== -->
+<div class="container" id="app">
     <div class="header">
         <h1>💬 <span>Snap</span>Chat</h1>
         <div class="header-controls">
@@ -362,64 +20,48 @@
             <button class="btn" onclick="toggleAdmin()">🔐</button>
         </div>
     </div>
-
-    <!-- ========== ENCRYPT KEY POPUP ========== -->
     <div class="popup-box" id="encryptBox">
         <strong>🔑 Encryption Key</strong>
         <p>Set a secret key to encrypt messages. <strong>Don't forget it!</strong></p>
         <input type="password" id="encryptKeyInput" placeholder="Enter encryption key..." />
         <button class="btn btn-primary" onclick="setEncryptionKey()">🔐 Set Key</button>
-        <div id="encryptStatus" style="margin-top:6px; font-size:12px; color:#888;"></div>
+        <div id="encryptStatus" style="margin-top:6px;font-size:12px;color:#888;"></div>
     </div>
-
-    <!-- ========== ADMIN PASSWORD POPUP ========== -->
     <div class="popup-box" id="passwordBox">
         <strong>🔐 Admin Panel</strong>
         <p>Default: <strong>admin123</strong></p>
         <input type="password" id="adminPassword" placeholder="Enter admin password..." />
         <button class="btn btn-primary" onclick="verifyAdmin()">✅ Verify</button>
-        <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
-            <button class="btn btn-danger" onclick="deleteAllMessages()" id="deleteAllBtn" style="display:none;">🗑️ Delete All Messages</button>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-danger" onclick="deleteAllMessages()" id="deleteAllBtn" style="display:none;">🗑️ Delete All</button>
         </div>
-        <div id="adminStatus" style="margin-top:6px; font-size:12px; color:#888;"></div>
+        <div id="adminStatus" style="margin-top:6px;font-size:12px;color:#888;"></div>
     </div>
-
-    <!-- ========== REQUEST POPUP ========== -->
     <div class="popup-box" id="requestBox">
         <strong>📩 Join Request</strong>
         <p>Enter a username to request joining the chat.</p>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <input type="text" id="requestName" placeholder="Choose a username" style="flex:1; min-width:100px;" />
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <input type="text" id="requestName" placeholder="Choose a username" style="flex:1;min-width:100px;" />
             <button class="btn btn-primary" onclick="sendRequest()">📤 Send</button>
         </div>
-        <div id="requestStatus" style="margin-top:4px; font-size:12px; color:#888;"></div>
-        <div id="requestIdDisplay" style="font-size:10px; color:#555;"></div>
+        <div id="requestStatus" style="margin-top:4px;font-size:12px;color:#888;"></div>
+        <div id="requestIdDisplay" style="font-size:10px;color:#555;"></div>
         <div id="pendingRequests" style="margin-top:8px;"></div>
     </div>
-
-    <!-- ========== USER SELECTOR ========== -->
     <div class="user-selector" id="userSelector">
         <button class="user-btn admin-user active" data-user="aish" onclick="setUser('aish')">👑 @aish</button>
     </div>
-
-    <!-- ========== STATUS BAR ========== -->
     <div class="status-bar">
         <span><span class="status-dot online" id="statusDot"></span> <span id="statusText">Connected</span></span>
         <span id="msgCount">0 messages</span>
     </div>
-
-    <!-- ========== CHAT BOX ========== -->
     <div class="chat-box" id="chatBox">
         <div class="msg system">💬 No messages yet. Start chatting!</div>
     </div>
-
-    <!-- ========== INPUT AREA ========== -->
     <div class="input-area">
         <input type="text" id="chatInput" placeholder="Type a message..." />
         <button onclick="sendMessage()">Send</button>
     </div>
-
-    <!-- ========== CONTACT ========== -->
     <div class="contact-section">
         <a href="https://facebook.com/yadavaiswary" target="_blank">📘</a>
         <a href="https://instagram.com/yadavaiswary" target="_blank">📷</a>
@@ -430,439 +72,70 @@
 
 <script>
     // ============================================================
-    // 🔥 CONFIG
+    // 🔐 PROTECTION - ANTI COPY + ANTI DEBUG
     // ============================================================
-    const BIN_ID = '6a9e8273ac6210605aaef916';
-    const ADMIN_PASSWORD = 'admin123';
-    const MAX_USERS = 1;
-
-    // ============================================================
-    // 🔐 ENCRYPTION
-    // ============================================================
-    let encryptionKey = localStorage.getItem('e2ee_key') || '';
-
-    async function setEncryptionKey() {
-        const input = document.getElementById('encryptKeyInput');
-        const key = input.value.trim();
-        if (!key) return document.getElementById('encryptStatus').textContent = '❌ Please enter a key!';
-        encryptionKey = key;
-        localStorage.setItem('e2ee_key', key);
-        document.getElementById('encryptStatus').textContent = '✅ Key set! Messages E2EE.';
-        document.getElementById('encryptStatus').style.color = '#34c759';
-        document.getElementById('encryptBox').classList.remove('show');
-    }
-
-    function toggleEncrypt() {
-        const box = document.getElementById('encryptBox');
-        box.classList.toggle('show');
-        if (box.classList.contains('show')) document.getElementById('encryptKeyInput').focus();
-    }
-
-    async function encryptMessage(text) {
-        if (!encryptionKey) return { encrypted: text, iv: null };
-        try {
-            const encoder = new TextEncoder();
-            const keyData = await crypto.subtle.importKey(
-                'raw',
-                encoder.encode(encryptionKey.padEnd(32, ' ').slice(0, 32)),
-                { name: 'AES-GCM' },
-                false,
-                ['encrypt', 'decrypt']
-            );
-            const iv = crypto.getRandomValues(new Uint8Array(12));
-            const encrypted = await crypto.subtle.encrypt(
-                { name: 'AES-GCM', iv: iv },
-                keyData,
-                encoder.encode(text)
-            );
-            const encryptedArray = new Uint8Array(encrypted);
-            const ivArray = new Uint8Array(iv);
-            return {
-                encrypted: btoa(String.fromCharCode(...encryptedArray)),
-                iv: btoa(String.fromCharCode(...ivArray))
-            };
-        } catch (e) {
-            console.error('Encryption error:', e);
-            return { encrypted: text, iv: null };
-        }
-    }
-
-    async function decryptMessage(encrypted, iv) {
-        if (!encryptionKey || !iv) return encrypted;
-        try {
-            const encoder = new TextEncoder();
-            const keyData = await crypto.subtle.importKey(
-                'raw',
-                encoder.encode(encryptionKey.padEnd(32, ' ').slice(0, 32)),
-                { name: 'AES-GCM' },
-                false,
-                ['encrypt', 'decrypt']
-            );
-            const encryptedBytes = Uint8Array.from(atob(encrypted), c => c.charCodeAt(0));
-            const ivBytes = Uint8Array.from(atob(iv), c => c.charCodeAt(0));
-            const decrypted = await crypto.subtle.decrypt(
-                { name: 'AES-GCM', iv: ivBytes },
-                keyData,
-                encryptedBytes
-            );
-            return new TextDecoder().decode(decrypted);
-        } catch (e) {
-            console.error('Decryption error:', e);
-            return '🔒 [Encrypted - wrong key?]';
-        }
-    }
-
-    // ============================================================
-    // 🚀 CHAT SYSTEM
-    // ============================================================
-
-    let messages = [];
-    let currentUser = 'aish';
-    let isAdmin = false;
-    let isSaving = false;
-    let users = ['aish'];
-    let pendingRequests = [];
-    let myUniqueId = '';
-    let chatEnabled = false;
-
-    // ========== 🆔 UNIQUE ID ==========
-    async function getUniqueId() {
-        let storedId = localStorage.getItem('chat_user_id');
-        if (storedId) return storedId;
-        try {
-            const ipRes = await fetch('https://api.ipify.org?format=json');
-            const ipData = await ipRes.json();
-            const ip = ipData.ip || 'unknown';
-            const fingerprint = navigator.userAgent + navigator.language + screen.width + screen.height;
-            const hash = await sha256(ip + fingerprint);
-            const uniqueId = hash.substring(0, 16);
-            localStorage.setItem('chat_user_id', uniqueId);
-            return uniqueId;
-        } catch {
-            const fallbackId = 'user_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
-            localStorage.setItem('chat_user_id', fallbackId);
-            return fallbackId;
-        }
-    }
-
-    async function sha256(message) {
-        const msgBuffer = new TextEncoder().encode(message);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    // ========== 👤 SET USER ==========
-    function setUser(user) {
-        if (!users.includes(user)) {
-            showStatus('❌ User not found!', 'error');
-            return;
-        }
-        currentUser = user;
-        document.querySelectorAll('.user-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.user === user);
+    (function protect() {
+        // Disable Right Click
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        // Disable Ctrl+U, Ctrl+Shift+I, F12
+        document.addEventListener('keydown', e => {
+            if (e.key === 'F12' || 
+                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
+                (e.ctrlKey && e.key === 'u')) {
+                e.preventDefault();
+                return false;
+            }
         });
-        document.getElementById('chatInput').placeholder = user === 'aish' ? 'Message as @aish...' : `Message as @${user}...`;
-        if (user !== 'aish' && !chatEnabled) {
-            document.getElementById('chatInput').disabled = true;
-            document.getElementById('chatInput').placeholder = '⏳ Wait for admin approval...';
-        } else {
-            document.getElementById('chatInput').disabled = false;
-        }
-    }
-
-    // ========== 🔐 ADMIN ==========
-    function verifyAdmin() {
-        const input = document.getElementById('adminPassword');
-        if (input.value.trim() === ADMIN_PASSWORD) {
-            isAdmin = true;
-            document.getElementById('passwordBox').classList.remove('show');
-            document.getElementById('deleteAllBtn').style.display = 'inline-block';
-            document.getElementById('adminStatus').textContent = '✅ Admin verified! Delete buttons active.';
-            document.getElementById('adminStatus').style.color = '#34c759';
-            showStatus('✅ Admin mode ON', 'success');
-            renderRequests();
-            displayMessages();
-        } else {
-            document.getElementById('adminStatus').textContent = '❌ Wrong password!';
-            document.getElementById('adminStatus').style.color = '#ff3b30';
-            input.value = '';
-        }
-    }
-
-    function toggleAdmin() {
-        const box = document.getElementById('passwordBox');
-        if (isAdmin) {
-            isAdmin = false;
-            box.classList.remove('show');
-            document.getElementById('deleteAllBtn').style.display = 'none';
-            document.getElementById('adminStatus').textContent = '';
-            showStatus('🔐 Admin mode OFF', 'info');
-            displayMessages();
-        } else {
-            box.classList.toggle('show');
-            if (box.classList.contains('show')) {
-                document.getElementById('adminPassword').focus();
-                document.getElementById('adminStatus').textContent = '';
-            }
-        }
-    }
-
-    // ========== 🗑️ DELETE ALL MESSAGES ==========
-    async function deleteAllMessages() {
-        if (!isAdmin) {
-            showStatus('❌ Admin login required!', 'error');
-            return;
-        }
-        const msgCount = messages.filter(m => !m.isSystem && !m.isRequest).length;
-        if (msgCount === 0) {
-            showStatus('💬 No messages to delete!', 'info');
-            return;
-        }
-        if (!confirm(`Delete all ${msgCount} messages? This cannot be undone!`)) return;
-        if (isSaving) return;
-
-        isSaving = true;
-        showStatus('⏳ Deleting all messages...', 'loading');
-
-        try {
-            // Keep only system messages and requests
-            const keepMessages = messages.filter(m => m.isSystem || m.isRequest);
-            const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messages: keepMessages })
-            });
-            if (!res.ok) throw new Error('Failed to delete all');
-            messages = keepMessages;
-            await displayMessages();
-            showStatus(`🗑️ ${msgCount} messages deleted!`, 'success');
-        } catch (error) {
-            showStatus('❌ Delete all failed: ' + error.message, 'error');
-        } finally { isSaving = false; }
-    }
-
-    // ========== 📩 REQUEST ==========
-    async function toggleRequest() {
-        const box = document.getElementById('requestBox');
-        box.classList.toggle('show');
-        if (box.classList.contains('show')) {
-            if (!myUniqueId) myUniqueId = await getUniqueId();
-            document.getElementById('requestIdDisplay').textContent = '🆔 Your ID: ' + myUniqueId;
-            document.getElementById('requestName').focus();
-            renderRequests();
-        }
-    }
-
-    async function sendRequest() {
-        const input = document.getElementById('requestName');
-        const name = input.value.trim().toLowerCase();
-        if (!name) return document.getElementById('requestStatus').textContent = '❌ Please enter a username!';
-        if (name === 'aish') return document.getElementById('requestStatus').textContent = '❌ "aish" is reserved!';
-        if (users.includes(name)) return document.getElementById('requestStatus').textContent = '❌ User already exists!';
-        if (!myUniqueId) myUniqueId = await getUniqueId();
-        if (pendingRequests.some(r => r.uniqueId === myUniqueId)) {
-            return document.getElementById('requestStatus').textContent = '⏳ You already have a pending request!';
-        }
-        if (localStorage.getItem('chat_request_sent') === 'true') {
-            return document.getElementById('requestStatus').textContent = '⏳ You already sent a request! Wait for admin.';
-        }
-        if (users.length >= MAX_USERS + 1) {
-            return document.getElementById('requestStatus').textContent = '❌ Chat is full! Only 1 other user allowed.';
-        }
-
-        const newRequest = {
-            id: 'req_' + Date.now(),
-            name: name,
-            uniqueId: myUniqueId,
-            timestamp: new Date().toISOString(),
-            status: 'pending'
+        // Anti-debugging - if devtools open, redirect
+        const checkDevTools = () => {
+            const devtools = /./;
+            devtools.toString = () => {
+                window.location.href = 'about:blank';
+                return '';
+            };
+            console.log('%c', devtools);
         };
-        pendingRequests.push(newRequest);
-        localStorage.setItem('chat_request_sent', 'true');
-        await saveRequests();
-        input.value = '';
-        document.getElementById('requestStatus').textContent = '✅ Request sent! Waiting for admin approval.';
-        document.getElementById('requestStatus').style.color = '#34c759';
-        document.getElementById('requestBadge').style.display = 'inline-block';
-        renderRequests();
-    }
+        setInterval(checkDevTools, 1000);
+        // Disable text selection
+        document.addEventListener('selectstart', e => e.preventDefault());
+        // Disable copy
+        document.addEventListener('copy', e => e.preventDefault());
+    })();
 
-    async function approveRequest(id) {
-        if (!isAdmin) return showStatus('❌ Admin login required!', 'error');
-        const request = pendingRequests.find(r => r.id === id);
-        if (!request) return;
-        if (users.length >= MAX_USERS + 1) {
-            showStatus(`❌ Max ${MAX_USERS} other user allowed!`, 'error');
-            return;
-        }
-        users.push(request.name);
-        pendingRequests = pendingRequests.filter(r => r.id !== id);
-        chatEnabled = true;
-        await saveRequests();
-        await saveUsers();
-        renderUsers();
-        renderRequests();
-        showStatus(`✅ @${request.name} added! Now they can chat.`, 'success');
-        document.getElementById('requestBadge').style.display = pendingRequests.length > 0 ? 'inline-block' : 'none';
-        if (myUniqueId === request.uniqueId) {
-            chatEnabled = true;
-            document.getElementById('chatInput').disabled = false;
-            document.getElementById('chatInput').placeholder = `Message as @${request.name}...`;
-        }
-    }
+    // ============================================================
+    // 🔥 OBFUSCATED CHAT SYSTEM
+    // ============================================================
+    const BIN_ID='6a9e8273ac6210605aaef916',ADMIN_PASSWORD='admin123',MAX_USERS=1;
+    let messages=[],currentUser='aish',isAdmin=false,isSaving=false,users=['aish'],pendingRequests=[],myUniqueId='',chatEnabled=false,encryptionKey=localStorage.getItem('e2ee_key')||'';
 
-    async function rejectRequest(id) {
-        if (!isAdmin) return showStatus('❌ Admin login required!', 'error');
-        pendingRequests = pendingRequests.filter(r => r.id !== id);
-        await saveRequests();
-        renderRequests();
-        document.getElementById('requestBadge').style.display = pendingRequests.length > 0 ? 'inline-block' : 'none';
-        showStatus('🗑️ Request rejected', 'info');
-    }
+    async function setEncryptionKey(){const i=document.getElementById('encryptKeyInput'),k=i.value.trim();if(!k)return document.getElementById('encryptStatus').textContent='❌ Please enter a key!';encryptionKey=k;localStorage.setItem('e2ee_key',k);document.getElementById('encryptStatus').textContent='✅ Key set!';document.getElementById('encryptStatus').style.color='#34c759';document.getElementById('encryptBox').classList.remove('show')}
+    function toggleEncrypt(){const b=document.getElementById('encryptBox');b.classList.toggle('show');if(b.classList.contains('show'))document.getElementById('encryptKeyInput').focus()}
+    async function encryptMessage(t){if(!encryptionKey)return{encrypted:t,iv:null};try{const e=new TextEncoder(),k=await crypto.subtle.importKey('raw',e.encode(encryptionKey.padEnd(32,' ').slice(0,32)),{name:'AES-GCM'},false,['encrypt','decrypt']),iv=crypto.getRandomValues(new Uint8Array(12)),enc=await crypto.subtle.encrypt({name:'AES-GCM',iv:iv},k,e.encode(t)),ea=new Uint8Array(enc),iva=new Uint8Array(iv);return{encrypted:btoa(String.fromCharCode(...ea)),iv:btoa(String.fromCharCode(...iva))}}catch(e){return{encrypted:t,iv:null}}}
+    async function decryptMessage(e,i){if(!encryptionKey||!i)return e;try{const en=new TextEncoder(),k=await crypto.subtle.importKey('raw',en.encode(encryptionKey.padEnd(32,' ').slice(0,32)),{name:'AES-GCM'},false,['encrypt','decrypt']),eb=Uint8Array.from(atob(e),c=>c.charCodeAt(0)),ib=Uint8Array.from(atob(i),c=>c.charCodeAt(0)),d=await crypto.subtle.decrypt({name:'AES-GCM',iv:ib},k,eb);return new TextDecoder().decode(d)}catch(e){return'🔒 [Encrypted - wrong key?]'}}
+    async function getUniqueId(){let s=localStorage.getItem('chat_user_id');if(s)return s;try{const r=await fetch('https://api.ipify.org?format=json'),d=await r.json(),ip=d.ip||'unknown',fp=navigator.userAgent+navigator.language+screen.width+screen.height,h=await sha256(ip+fp),uid=h.substring(0,16);localStorage.setItem('chat_user_id',uid);return uid}catch{const fid='user_'+Date.now().toString(36)+Math.random().toString(36).substring(2,6);localStorage.setItem('chat_user_id',fid);return fid}}
+    async function sha256(m){const b=new TextEncoder().encode(m),h=await crypto.subtle.digest('SHA-256',b),a=Array.from(new Uint8Array(h));return a.map(b=>b.toString(16).padStart(2,'0')).join('')}
+    function setUser(u){if(!users.includes(u))return showStatus('❌ User not found!','error');currentUser=u;document.querySelectorAll('.user-btn').forEach(b=>b.classList.toggle('active',b.dataset.user===u));document.getElementById('chatInput').placeholder=u==='aish'?'Message as @aish...':`Message as @${u}...`;if(u!=='aish'&&!chatEnabled){document.getElementById('chatInput').disabled=true;document.getElementById('chatInput').placeholder='⏳ Wait for admin approval...'}else document.getElementById('chatInput').disabled=false}
+    function verifyAdmin(){const i=document.getElementById('adminPassword');if(i.value.trim()===ADMIN_PASSWORD){isAdmin=true;document.getElementById('passwordBox').classList.remove('show');document.getElementById('deleteAllBtn').style.display='inline-block';document.getElementById('adminStatus').textContent='✅ Admin verified!';document.getElementById('adminStatus').style.color='#34c759';showStatus('✅ Admin mode ON','success');renderRequests();displayMessages()}else{document.getElementById('adminStatus').textContent='❌ Wrong password!';document.getElementById('adminStatus').style.color='#ff3b30';i.value=''}}
+    function toggleAdmin(){const b=document.getElementById('passwordBox');if(isAdmin){isAdmin=false;b.classList.remove('show');document.getElementById('deleteAllBtn').style.display='none';document.getElementById('adminStatus').textContent='';showStatus('🔐 Admin mode OFF','info');displayMessages()}else{b.classList.toggle('show');if(b.classList.contains('show')){document.getElementById('adminPassword').focus();document.getElementById('adminStatus').textContent=''}}}
+    async function deleteAllMessages(){if(!isAdmin)return showStatus('❌ Admin login required!','error');const c=messages.filter(m=>!m.isSystem&&!m.isRequest).length;if(c===0)return showStatus('💬 No messages to delete!','info');if(!confirm(`Delete all ${c} messages? This cannot be undone!`))return;if(isSaving)return;isSaving=true;showStatus('⏳ Deleting all messages...','loading');try{const km=messages.filter(m=>m.isSystem||m.isRequest),r=await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:km})});if(!r.ok)throw new Error('Failed to delete all');messages=km;await displayMessages();showStatus(`🗑️ ${c} messages deleted!`,'success')}catch(error){showStatus('❌ Delete all failed: '+error.message,'error')}finally{isSaving=false}}
+    async function toggleRequest(){const b=document.getElementById('requestBox');b.classList.toggle('show');if(b.classList.contains('show')){if(!myUniqueId)myUniqueId=await getUniqueId();document.getElementById('requestIdDisplay').textContent='🆔 Your ID: '+myUniqueId;document.getElementById('requestName').focus();renderRequests()}}
+    async function sendRequest(){const i=document.getElementById('requestName'),n=i.value.trim().toLowerCase();if(!n)return document.getElementById('requestStatus').textContent='❌ Please enter a username!';if(n==='aish')return document.getElementById('requestStatus').textContent='❌ "aish" is reserved!';if(users.includes(n))return document.getElementById('requestStatus').textContent='❌ User already exists!';if(!myUniqueId)myUniqueId=await getUniqueId();if(pendingRequests.some(r=>r.uniqueId===myUniqueId))return document.getElementById('requestStatus').textContent='⏳ You already have a pending request!';if(localStorage.getItem('chat_request_sent')==='true')return document.getElementById('requestStatus').textContent='⏳ You already sent a request!';if(users.length>=MAX_USERS+1)return document.getElementById('requestStatus').textContent='❌ Chat is full! Only 1 other user allowed.';const nr={id:'req_'+Date.now(),name:n,uniqueId:myUniqueId,timestamp:new Date().toISOString(),status:'pending'};pendingRequests.push(nr);localStorage.setItem('chat_request_sent','true');await saveRequests();i.value='';document.getElementById('requestStatus').textContent='✅ Request sent! Waiting for admin approval.';document.getElementById('requestStatus').style.color='#34c759';document.getElementById('requestBadge').style.display='inline-block';renderRequests()}
+    async function approveRequest(id){if(!isAdmin)return showStatus('❌ Admin login required!','error');const r=pendingRequests.find(r=>r.id===id);if(!r)return;if(users.length>=MAX_USERS+1){showStatus(`❌ Max ${MAX_USERS} other user allowed!`,'error');return}users.push(r.name);pendingRequests=pendingRequests.filter(r=>r.id!==id);chatEnabled=true;await saveRequests();await saveUsers();renderUsers();renderRequests();showStatus(`✅ @${r.name} added!`,'success');document.getElementById('requestBadge').style.display=pendingRequests.length>0?'inline-block':'none';if(myUniqueId===r.uniqueId){chatEnabled=true;document.getElementById('chatInput').disabled=false;document.getElementById('chatInput').placeholder=`Message as @${r.name}...`}}
+    async function rejectRequest(id){if(!isAdmin)return showStatus('❌ Admin login required!','error');pendingRequests=pendingRequests.filter(r=>r.id!==id);await saveRequests();renderRequests();document.getElementById('requestBadge').style.display=pendingRequests.length>0?'inline-block':'none';showStatus('🗑️ Request rejected','info')}
+    function renderRequests(){const c=document.getElementById('pendingRequests');if(!isAdmin){c.innerHTML='<p style="color:#555;font-size:12px;">🔐 Admin login to manage requests.</p>';return}if(pendingRequests.length===0){c.innerHTML='<p style="color:#555;font-size:12px;">✅ No pending requests.</p>';return}c.innerHTML=pendingRequests.map(r=>`<div class="request-item"><div><span class="name">@${r.name}</span><span class="id">🆔 ${r.uniqueId}</span><span class="time">${new Date(r.timestamp).toLocaleString()}</span></div><div class="actions"><button class="btn btn-success" style="padding:4px 10px;font-size:11px;border-radius:16px;" onclick="approveRequest('${r.id}')">✅</button><button class="btn btn-danger" style="padding:4px 10px;font-size:11px;border-radius:16px;" onclick="rejectRequest('${r.id}')">❌</button></div></div>`).join('')}
+    function renderUsers(){const s=document.getElementById('userSelector');s.innerHTML=users.map(u=>{const ia=u==='aish',ac=u===currentUser?'active':'';return`<button class="user-btn ${ia?'admin-user':''} ${ac}" data-user="${u}" onclick="setUser('${u}')">${ia?'👑 ':''}@${u}</button>`}).join('')}
+    async function saveUsers(){try{const u=messages.filter(m=>!m.isSystem),ns={id:'system_users_'+Date.now(),user:'system',text:JSON.stringify({users:users,chatEnabled:chatEnabled}),timestamp:new Date().toISOString(),isSystem:true};u.push(ns);const r=await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:u})});if(!r.ok)throw new Error('Failed to save');messages=u}catch(e){}}
+    async function saveRequests(){try{const u=messages.filter(m=>!m.isRequest&&!m.isSystem),nr={id:'requests_'+Date.now(),user:'system',text:JSON.stringify({requests:pendingRequests}),timestamp:new Date().toISOString(),isRequest:true};u.push(nr);const sm=messages.find(m=>m.isSystem);if(sm)u.push(sm);const r=await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:u})});if(!r.ok)throw new Error('Failed to save requests');messages=u}catch(e){}}
+    async function fetchMessages(){try{const r=await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`);if(!r.ok)throw new Error('Failed to fetch');const d=await r.json();messages=d.record.messages||[];const sm=messages.find(m=>m.isSystem);if(sm){try{const sv=JSON.parse(sm.text);if(sv.users)users=sv.users;if(sv.chatEnabled!==undefined)chatEnabled=sv.chatEnabled}catch(e){}}const rm=messages.find(m=>m.isRequest);if(rm){try{const sv=JSON.parse(rm.text);if(sv.requests)pendingRequests=sv.requests}catch(e){}}document.getElementById('requestBadge').style.display=pendingRequests.length>0?'inline-block':'none';if(currentUser!=='aish'&&users.includes(currentUser)){chatEnabled=true;document.getElementById('chatInput').disabled=false}else if(currentUser!=='aish'&&!users.includes(currentUser)){chatEnabled=false;document.getElementById('chatInput').disabled=true;document.getElementById('chatInput').placeholder='⏳ Wait for admin approval...'}await displayMessages();renderUsers();if(isAdmin)renderRequests();updateStatus(true)}catch(e){updateStatus(false)}}
+    async function sendMessage(){if(currentUser!=='aish'&&!chatEnabled)return showStatus('⏳ Wait for admin approval to chat!','error');const i=document.getElementById('chatInput'),t=i.value.trim();if(!t)return showStatus('Please type something!','error');if(isSaving)return;if(!encryptionKey)return showStatus('❌ Please set encryption key first! (Click 🔑)','error');const enc=await encryptMessage(t),nm={id:Date.now().toString(),user:currentUser,text:enc.encrypted,iv:enc.iv,encrypted:true,timestamp:new Date().toISOString()};isSaving=true;showStatus('⏳ Sending...','loading');try{const u=messages.filter(m=>!m.isSystem&&!m.isRequest),sm=messages.find(m=>m.isSystem);if(sm)u.push(sm);const rm=messages.find(m=>m.isRequest);if(rm)u.push(rm);u.push(nm);const r=await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:u})});if(!r.ok)throw new Error('Failed to send');messages=u;i.value='';await displayMessages();showStatus('✅ Message sent (E2EE)!','success')}catch(e){showStatus('❌ Error: '+e.message,'error')}finally{isSaving=false}}
+    async function deleteMessage(id){if(!isAdmin)return showStatus('❌ Admin login required!','error');if(!confirm('Delete this message?'))return;if(isSaving)return;isSaving=true;showStatus('⏳ Deleting...','loading');try{const u=messages.filter(m=>m.id!==id),r=await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:u})});if(!r.ok)throw new Error('Failed to delete');messages=u;await displayMessages();showStatus('🗑️ Message deleted!','success')}catch(e){showStatus('❌ Delete failed: '+e.message,'error')}finally{isSaving=false}}
+    async function displayMessages(){const b=document.getElementById('chatBox'),dm=messages.filter(m=>!m.isSystem&&!m.isRequest);if(dm.length===0){b.innerHTML='<div class="msg system">💬 No messages yet. Start chatting!</div>';return}let html='';for(const m of dm){const ia=m.user==='aish',t=new Date(m.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),uc=ia?'aish':'user1',sn=ia?'👑 @aish':`@${m.user}`;let dt=m.text,ie=false;if(m.encrypted&&m.iv){ie=true;dt=await decryptMessage(m.text,m.iv)}const il=dt.startsWith('http://')||dt.startsWith('https://'),ft=il?`<a href="${dt}" target="_blank">${dt}</a>`:dt,eb=ie?'<span class="e2ee-badge">🔒</span>':'';html+=`<div class="msg ${uc}"><div class="sender">${sn}${ia?' <span class="admin-badge">Admin</span>':''}</div><div class="text-content">${ft} ${eb}</div><div class="time-row">${t}${isAdmin?`<button class="delete-btn" onclick="deleteMessage('${m.id}')">✕</button>`:''}</div></div>`}b.innerHTML=html;b.scrollTop=b.scrollHeight;document.getElementById('msgCount').textContent=dm.length+' messages'}
+    function showStatus(t,type){const e=document.getElementById('statusText');e.textContent=t;e.style.color=type==='success'?'#34c759':type==='error'?'#ff3b30':type==='loading'?'#fffc00':'#888';if(type!=='loading')setTimeout(()=>{e.textContent='Connected';e.style.color='#888'},4000)}
+    function updateStatus(o){document.getElementById('statusDot').className='status-dot '+(o?'online':'offline');document.getElementById('statusText').textContent=o?'Connected':'Disconnected'}
 
-    function renderRequests() {
-        const container = document.getElementById('pendingRequests');
-        if (!isAdmin) {
-            container.innerHTML = '<p style="color:#555; font-size:12px;">🔐 Admin login to manage requests.</p>';
-            return;
-        }
-        if (pendingRequests.length === 0) {
-            container.innerHTML = '<p style="color:#555; font-size:12px;">✅ No pending requests.</p>';
-            return;
-        }
-        container.innerHTML = pendingRequests.map(r => `
-            <div class="request-item">
-                <div>
-                    <span class="name">@${r.name}</span>
-                    <span class="id">🆔 ${r.uniqueId}</span>
-                    <span class="time">${new Date(r.timestamp).toLocaleString()}</span>
-                </div>
-                <div class="actions">
-                    <button class="btn btn-success" style="padding:4px 10px;font-size:11px;border-radius:16px;" onclick="approveRequest('${r.id}')">✅</button>
-                    <button class="btn btn-danger" style="padding:4px 10px;font-size:11px;border-radius:16px;" onclick="rejectRequest('${r.id}')">❌</button>
-                </div>
-            </div>
-        `).join('');
-    }
-
-    // ========== 👥 USERS ==========
-    function renderUsers() {
-        const selector = document.getElementById('userSelector');
-        selector.innerHTML = users.map(u => {
-            const isAdminUser = u === 'aish';
-            const active = u === currentUser ? 'active' : '';
-            return `<button class="user-btn ${isAdminUser ? 'admin-user' : ''} ${active}" data-user="${u}" onclick="setUser('${u}')">${isAdminUser ? '👑 ' : ''}@${u}</button>`;
-        }).join('');
-    }
-
-    // ========== 💾 SAVE ==========
-    async function saveUsers() {
-        try {
-            const updated = messages.filter(m => !m.isSystem);
-            const newSystem = {
-                id: 'system_users_' + Date.now(),
-                user: 'system',
-                text: JSON.stringify({ users: users, chatEnabled: chatEnabled }),
-                timestamp: new Date().toISOString(),
-                isSystem: true
-            };
-            updated.push(newSystem);
-            const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messages: updated })
-            });
-            if (!res.ok) throw new Error('Failed to save');
-            messages = updated;
-        } catch (error) { console.error('Save error:', error); }
-    }
-
-    async function saveRequests() {
-        try {
-            const updated = messages.filter(m => !m.isRequest && !m.isSystem);
-            const newReq = {
-                id: 'requests_' + Date.now(),
-                user: 'system',
-                text: JSON.stringify({ requests: pendingRequests }),
-                timestamp: new Date().toISOString(),
-                isRequest: true
-            };
-            updated.push(newReq);
-            const sysMsg = messages.find(m => m.isSystem);
-            if (sysMsg) updated.push(sysMsg);
-            const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messages: updated })
-            });
-            if (!res.ok) throw new Error('Failed to save requests');
-            messages = updated;
-        } catch (error) { console.error('Save requests error:', error); }
-    }
-
-    // ========== 📥 FETCH ==========
-    async function fetchMessages() {
-        try {
-            const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`);
-            if (!res.ok) throw new Error('Failed to fetch');
-            const data = await res.json();
-            messages = data.record.messages || [];
-            
-            const sysMsg = messages.find(m => m.isSystem);
-            if (sysMsg) {
-                try {
-                    const saved = JSON.parse(sysMsg.text);
-                    if (saved.users) users = saved.users;
-                    if (saved.chatEnabled !== undefined) chatEnabled = saved.chatEnabled;
-                } catch (e) {}
-            }
-            
-            const reqMsg = messages.find(m => m.isRequest);
-            if (reqMsg) {
-                try {
-                    const saved = JSON.parse(reqMsg.text);
-                    if (saved.requests) pendingRequests = saved.requests;
-                } catch (e) {}
-            }
-            
-            document.getElementById('requestBadge').style.display = pendingRequests.length > 0 ? 'inline-block' : 'none';
-            
-            if (currentUser !== 'aish' && users.includes(currentUser)) {
-                chatEnabled = true;
-                document.getElementById('chatInput').disabled = false;
-            } else if (currentUser !== 'aish' && !users.includes(currentUser)) {
-                chatEnabled = false;
-                document.getElementById('chatInput').disabled = true;
-                document.getElementById('chatInput').placeholder = '⏳ Wait for admin approval...';
-            }
-            
-            await displayMessages();
-            renderUsers();
-            if (isAdmin) renderRequests();
-            updateStatus(true);
-        } catch (error) {
-            updateStatus(false);
-            console.error('Fetch error:', error);
-        }
-    }
-
-    // ========== 📤 SEND ==========
-    async function sendMessage() {
-        if (currentUser !== 'aish' && !chatEnabled) {
-            return showStatus('⏳ Wait for admin approval to chat!', 'error');
-        }
-        const input = document.getElementById('chatInput');
-        const text = input.value.trim();
-        if (!text) return showStatus('Please type something!', 'error');
-        if (isSaving) return;
-        if (!encryptionKey) {
-            return showStatus('❌ Please set encryption key first! (Click 🔑)', 'error');
-        }
-
-        const encrypted = await encryptMessage(text);
-        const newMsg = {
-            id: Date.now().toString(),
-            user: currentUser,
-            text: encrypted.encrypted,
-            iv: encrypted
+    async function init(){myUniqueId=await getUniqueId();if(encryptionKey){document.getElementById('encryptBox').classList.remove('show')}else{document.getElementById('encryptBox').classList.add('show')}fetchMessages();setInterval(fetchMessages,5000);if(currentUser!=='aish'){document.getElementById('chatInput').disabled=true;document.getElementById('chatInput').placeholder='⏳ Wait for admin approval...'}}
+    document.getElementById('chatInput').addEventListener('keydown',e=>{if(e.key==='Enter')sendMessage()});
+    init();
+</script>
+</body>
+</html>
