@@ -32,6 +32,8 @@
         .user-btn.admin-user{border:1px solid #ff3b30}
         .user-btn.admin-locked{opacity:0.5;cursor:not-allowed;border-color:#555}
         .user-btn.disabled{opacity:0.3;cursor:not-allowed}
+        .user-btn .remove-user-btn{background:rgba(255,50,50,0.3);border:none;color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;cursor:pointer;margin-left:4px;padding:0;line-height:16px;text-align:center;transition:.2s}
+        .user-btn .remove-user-btn:hover{background:rgba(255,50,50,0.7)}
         .chat-box{flex:1;overflow-y:auto;padding:10px 14px;background:#121212;display:flex;flex-direction:column;gap:2px;min-height:0}
         .chat-box::-webkit-scrollbar{width:3px}
         .chat-box::-webkit-scrollbar-track{background:transparent}
@@ -226,9 +228,9 @@
     })();
 
     // ============================================================
-    // 🔥 CHAT SYSTEM + KEY MANDATORY + BROADCAST
+    // 🔥 CHAT SYSTEM + KEY MANDATORY + BROADCAST + USER DELETE
     // ============================================================
-    const BIN_ID='6a9e8273ac6210605aaef916',ADMIN_PASSWORD='admin123',MAX_USERS=1;
+    const BIN_ID='6a9e8273ac6210605aaef916',ADMIN_PASSWORD='admin123',MAX_USERS=4;
     let messages=[],currentUser='aish',isAdmin=false,isSaving=false,users=['aish'],pendingRequests=[],myUniqueId='',chatEnabled=false;
     let encryptionKey = localStorage.getItem('e2ee_key') || '';
     let keyHint = localStorage.getItem('e2ee_hint') || '';
@@ -497,24 +499,35 @@
         }
     }
 
-    // ========== 👥 USER MANAGEMENT - DELETE USER ==========
+    // ========== 👥 USER MANAGEMENT - DELETE USER (FIXED) ==========
     async function deleteUser(userToDelete) {
         if (!isAdmin) { showStatus('❌ Admin login required!', 'error'); return; }
         if (userToDelete === 'aish') { showStatus('❌ Cannot delete admin!', 'error'); return; }
-        if (!confirm(`Delete user @${userToDelete} and all their messages?`)) return;
+        if (!confirm(`Delete user @${userToDelete} and all their messages?\n\nThis will also delete all messages sent by this user.`)) return;
         if (isSaving) return;
         isSaving = true;
         showStatus(`⏳ Deleting @${userToDelete}...`, 'loading');
         try {
+            // 1. Remove user from users list
             users = users.filter(u => u !== userToDelete);
+            
+            // 2. Delete all messages from this user (including broadcasts from this user)
             messages = messages.filter(m => m.user !== userToDelete && !m.isSystem && !m.isRequest);
+            
+            // 3. Save updated data
             await saveUsers();
             await saveRequests();
-            if (currentUser === userToDelete) setUser('aish');
+            
+            // 4. If current user was deleted, switch to aish
+            if (currentUser === userToDelete) {
+                setUser('aish');
+            }
+            
+            // 5. Update UI
             renderUsers();
             renderUserTags();
             await displayMessages();
-            showStatus(`🗑️ @${userToDelete} deleted!`, 'success');
+            showStatus(`🗑️ @${userToDelete} deleted successfully!`, 'success');
         } catch (error) {
             showStatus('❌ Delete failed: ' + error.message, 'error');
         } finally { isSaving = false; }
@@ -523,20 +536,24 @@
     function renderUserTags() {
         const container = document.getElementById('userListTags');
         if (!isAdmin) { container.innerHTML = ''; return; }
+        if (users.length === 0) {
+            container.innerHTML = '<span style="color:#555;font-size:11px;">No users</span>';
+            return;
+        }
         container.innerHTML = users.map(u => {
             if (u === 'aish') {
                 return `<span class="user-tag" style="border-color:#ff3b30;">👑 @aish</span>`;
             }
-            return `<span class="user-tag">@${u} <button class="remove-btn" onclick="deleteUser('${u}')" title="Delete user">✕</button></span>`;
+            return `<span class="user-tag">@${u} <button class="remove-btn" onclick="deleteUser('${u}')" title="Delete user and their messages">✕</button></span>`;
         }).join('');
     }
 
     // ========== 📩 REQUEST ==========
     async function toggleRequest(){if(!isKeySet()){showStatus('❌ Set key first!','error');return}const b=document.getElementById('requestBox');b.classList.toggle('show');if(b.classList.contains('show')){if(!myUniqueId)myUniqueId=await getUniqueId();document.getElementById('requestIdDisplay').textContent='🆔 Your ID: '+myUniqueId;document.getElementById('requestName').focus();renderRequests()}}
     
-    async function sendRequest(){if(!isKeySet()){showStatus('❌ Set key first!','error');return}const i=document.getElementById('requestName'),n=i.value.trim().toLowerCase();if(!n)return document.getElementById('requestStatus').textContent='❌ Please enter a username!';if(n==='aish')return document.getElementById('requestStatus').textContent='❌ "aish" is reserved!';if(users.includes(n))return document.getElementById('requestStatus').textContent='❌ User already exists!';if(!myUniqueId)myUniqueId=await getUniqueId();if(pendingRequests.some(r=>r.uniqueId===myUniqueId))return document.getElementById('requestStatus').textContent='⏳ You already have a pending request!';if(localStorage.getItem('chat_request_sent')==='true')return document.getElementById('requestStatus').textContent='⏳ You already sent a request!';if(users.length>=MAX_USERS+1)return document.getElementById('requestStatus').textContent='❌ Chat is full! Only 1 other user allowed.';const nr={id:'req_'+Date.now(),name:n,uniqueId:myUniqueId,timestamp:new Date().toISOString(),status:'pending'};pendingRequests.push(nr);localStorage.setItem('chat_request_sent','true');await saveRequests();i.value='';document.getElementById('requestStatus').textContent='✅ Request sent! Waiting for admin approval.';document.getElementById('requestStatus').style.color='#34c759';document.getElementById('requestBadge').style.display='inline-block';renderRequests()}
+    async function sendRequest(){if(!isKeySet()){showStatus('❌ Set key first!','error');return}const i=document.getElementById('requestName'),n=i.value.trim().toLowerCase();if(!n)return document.getElementById('requestStatus').textContent='❌ Please enter a username!';if(n==='aish')return document.getElementById('requestStatus').textContent='❌ "aish" is reserved!';if(users.includes(n))return document.getElementById('requestStatus').textContent='❌ User already exists!';if(!myUniqueId)myUniqueId=await getUniqueId();if(pendingRequests.some(r=>r.uniqueId===myUniqueId))return document.getElementById('requestStatus').textContent='⏳ You already have a pending request!';if(localStorage.getItem('chat_request_sent')==='true')return document.getElementById('requestStatus').textContent='⏳ You already sent a request!';if(users.length>=MAX_USERS+1)return document.getElementById('requestStatus').textContent='❌ Chat is full! Only '+MAX_USERS+' other users allowed.';const nr={id:'req_'+Date.now(),name:n,uniqueId:myUniqueId,timestamp:new Date().toISOString(),status:'pending'};pendingRequests.push(nr);localStorage.setItem('chat_request_sent','true');await saveRequests();i.value='';document.getElementById('requestStatus').textContent='✅ Request sent! Waiting for admin approval.';document.getElementById('requestStatus').style.color='#34c759';document.getElementById('requestBadge').style.display='inline-block';renderRequests()}
     
-    async function approveRequest(id){if(!isAdmin)return showStatus('❌ Admin login required!','error');const r=pendingRequests.find(r=>r.id===id);if(!r)return;if(users.length>=MAX_USERS+1){showStatus(`❌ Max ${MAX_USERS} other user allowed!`,'error');return}users.push(r.name);pendingRequests=pendingRequests.filter(r=>r.id!==id);chatEnabled=true;await saveRequests();await saveUsers();renderUsers();renderUserTags();renderRequests();showStatus(`✅ @${r.name} added!`,'success');document.getElementById('requestBadge').style.display=pendingRequests.length>0?'inline-block':'none';if(myUniqueId===r.uniqueId){chatEnabled=true;document.getElementById('chatInput').disabled=false;document.getElementById('chatInput').placeholder=`Message as @${r.name}...`}}
+    async function approveRequest(id){if(!isAdmin)return showStatus('❌ Admin login required!','error');const r=pendingRequests.find(r=>r.id===id);if(!r)return;if(users.length>=MAX_USERS+1){showStatus(`❌ Max ${MAX_USERS} other users allowed!`,'error');return}users.push(r.name);pendingRequests=pendingRequests.filter(r=>r.id!==id);chatEnabled=true;await saveRequests();await saveUsers();renderUsers();renderUserTags();renderRequests();showStatus(`✅ @${r.name} added!`,'success');document.getElementById('requestBadge').style.display=pendingRequests.length>0?'inline-block':'none';if(myUniqueId===r.uniqueId){chatEnabled=true;document.getElementById('chatInput').disabled=false;document.getElementById('chatInput').placeholder=`Message as @${r.name}...`}}
     
     async function rejectRequest(id){if(!isAdmin)return showStatus('❌ Admin login required!','error');pendingRequests=pendingRequests.filter(r=>r.id!==id);await saveRequests();renderRequests();document.getElementById('requestBadge').style.display=pendingRequests.length>0?'inline-block':'none';showStatus('🗑️ Request rejected','info')}
 
