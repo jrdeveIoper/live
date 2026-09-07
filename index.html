@@ -870,4 +870,80 @@
                 displayText = await decryptMessage(msg.text, msg.iv);
             }
             
-            const isLink = displayText.startsWith('http://') || displayText
+            const isLink = displayText.startsWith('http://') || displayText.startsWith('https://');
+            const formattedText = isLink ? `<a href="${displayText}" target="_blank">${displayText}</a>` : displayText;
+            const e2eeBadge = isEncrypted ? '<span class="e2ee-badge">🔒</span>' : '';
+            
+            html += `
+                <div class="msg ${userClass}">
+                    <div class="sender">${senderDisplay} ${isAish ? '<span class="admin-badge">Admin</span>' : ''}</div>
+                    <div class="text-content">${formattedText} ${e2eeBadge}</div>
+                    <div class="time-row">
+                        ${time}
+                        ${isAdmin ? `<button class="delete-btn" onclick="deleteMessage('${msg.id}')">✕</button>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+        box.innerHTML = html;
+        box.scrollTop = box.scrollHeight;
+    }
+
+    // ========== 💬 STATUS ==========
+    function showStatus(text, type) {
+        const el = document.getElementById('statusText');
+        if (!el) return;
+        el.textContent = text;
+        el.style.color = type === 'success' ? '#34c759' : type === 'error' ? '#ff3b30' : type === 'loading' ? '#fffc00' : '#888';
+        if (type !== 'loading') setTimeout(() => { el.textContent = 'Connected'; el.style.color = '#888'; }, 4000);
+    }
+
+    function updateStatus(online) {
+        const dot = document.getElementById('statusDot');
+        if (!dot) return;
+        dot.className = 'status-dot ' + (online ? 'online' : 'offline');
+        const el = document.getElementById('statusText');
+        if (el) el.textContent = online ? 'Connected' : 'Disconnected';
+    }
+
+    // ========== 🚀 INIT ==========
+    async function init() {
+        myUniqueId = await getUniqueId();
+        console.log('🆔 Your Unique ID:', myUniqueId);
+        if (encryptionKey) {
+            document.getElementById('encryptBox').classList.remove('show');
+        } else {
+            document.getElementById('encryptBox').classList.add('show');
+        }
+        // Add status bar if missing (added dynamically)
+        const statusBar = document.createElement('div');
+        statusBar.className = 'status-bar';
+        statusBar.style.cssText = 'display:flex;justify-content:space-between;padding:4px 14px;background:#121212;font-size:11px;color:#555;border-bottom:1px solid #2a2a2a;flex-shrink:0;';
+        statusBar.innerHTML = `<span><span class="status-dot online" id="statusDot"></span> <span id="statusText">Connected</span></span><span id="msgCount">0 messages</span>`;
+        const chatBox = document.getElementById('chatBox');
+        chatBox.parentNode.insertBefore(statusBar, chatBox);
+        
+        fetchMessages();
+        setInterval(fetchMessages, 5000);
+        if (currentUser !== 'aish') {
+            document.getElementById('chatInput').disabled = true;
+            document.getElementById('chatInput').placeholder = '⏳ Wait for admin approval...';
+        }
+    }
+
+    document.getElementById('chatInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
+
+    // Fix for msgCount update
+    const origDisplay = displayMessages;
+    displayMessages = async function() {
+        await origDisplay();
+        const count = document.getElementById('msgCount');
+        if (count) count.textContent = `${messages.filter(m => !m.isSystem && !m.isRequest).length} messages`;
+    };
+
+    init();
+</script>
+</body>
+</html>
