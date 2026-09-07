@@ -27,7 +27,9 @@
         .message { padding: 10px; margin: 10px 0; border-radius: 5px; display: none; }
         .message.success { display: block; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .message.error { display: block; background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .message.loading { display: block; background: #cce5ff; color: #004085; border: 1px solid #b8daff; }
         .empty-msg { color: #6c757d; text-align: center; padding: 20px; }
+        .auto-tag { background: #ffc107; color: #000; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
         @media (max-width: 500px) { .input-group button { width: 100%; } }
     </style>
 </head>
@@ -35,103 +37,178 @@
 
 <div class="container">
     <h1>
-        🔗 Live Links
+        🔗 Live Links <span class="auto-tag">⚡ AUTO</span>
         <button class="admin-btn" onclick="toggleAdmin()">⚙️ Admin</button>
     </h1>
     
     <!-- Admin Panel -->
     <div class="admin-panel" id="adminPanel">
         <h3>➕ Add New Link</h3>
+        <p style="color: #6c757d; font-size: 14px; margin-bottom: 15px;">
+            ⚡ Link daalo aur <strong>Enter</strong> dabao - apne aap save ho jayega!
+        </p>
+        
         <div class="input-group">
             <input type="url" id="linkInput" placeholder="https://example.com/your-link" />
-            <button onclick="addLink()">Save Link</button>
+            <button onclick="addLink()">💾 Save Link</button>
         </div>
         <div id="message" class="message"></div>
-        <p style="font-size: 12px; color: #6c757d; margin-top: 10px;">
-            💾 Links automatically saved in your browser's local storage.
-        </p>
     </div>
 
     <!-- Links Display -->
     <div id="linksContainer">
-        <p class="empty-msg">No links saved yet. Click "Admin" to add.</p>
+        <p class="empty-msg">⏳ Loading links...</p>
     </div>
 </div>
 
 <script>
-    // Links array - localStorage se load karein
-    let links = JSON.parse(localStorage.getItem('myLinks')) || [];
+    // ============================================================
+    // 🔥 YAHAN SIRF YEH DO CHEEZEIN BADALNI HAI:
+    // ============================================================
+    const REPO_OWNER = 'jrdeveioper';    // Apna GitHub username
+    const REPO_NAME = 'live';            // Apna repo name
+    const ISSUE_LABEL = 'link';          // Label for links (don't change)
+    
+    // ============================================================
+    // 🚀 REST SAB AUTO HAI - KUCH NAHI BADALNA!
+    // ============================================================
 
-    // 🔄 Display links function
-    function displayLinks() {
-        const container = document.getElementById('linksContainer');
+    let currentLinks = [];
+
+    // ========== 📥 FETCH LINKS FROM GITHUB ISSUES ==========
+    async function fetchLinks() {
+        showMessage('⏳ Loading links...', 'loading');
         
-        if (links.length === 0) {
-            container.innerHTML = '<p class="empty-msg">No links saved yet. Click "Admin" to add.</p>';
-            return;
+        try {
+            // GitHub Issues se saare 'link' label wale issues fetch karo
+            const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/issues?labels=${ISSUE_LABEL}&state=open&per_page=100`;
+            const response = await fetch(url);
+            
+            if (!response.ok) throw new Error('Failed to fetch');
+            
+            const issues = await response.json();
+            
+            // Har issue ke title mein link hai
+            currentLinks = issues
+                .map(issue => issue.title.trim())
+                .filter(title => title.startsWith('http'));
+                
+            displayLinks();
+            showMessage(`✅ ${currentLinks.length} links loaded`, 'success');
+            
+        } catch (error) {
+            console.error('Fetch error:', error);
+            showMessage('❌ Error loading links', 'error');
+            document.getElementById('linksContainer').innerHTML = 
+                `<p class="empty-msg">❌ Failed to load links. Check console.</p>`;
         }
-
-        container.innerHTML = links.map((link, index) => `
-            <div class="link-item">
-                <a href="${link}" target="_blank" rel="noopener">${link}</a>
-                <div>
-                    <button class="copy-btn" onclick="copyLink('${link}')">📋 Copy</button>
-                    <button class="delete-btn" onclick="deleteLink(${index})">🗑️</button>
-                </div>
-            </div>
-        `).join('');
     }
 
-    // ➕ Add link function
-    function addLink() {
+    // ========== 💾 SAVE LINK (CREATE GITHUB ISSUE) ==========
+    async function addLink() {
         const input = document.getElementById('linkInput');
         const newLink = input.value.trim();
-        const msgDiv = document.getElementById('message');
-
-        // Validation
-        if (!newLink) {
-            showMessage('Please enter a valid URL.', 'error');
-            return;
-        }
-
-        try {
-            new URL(newLink); // Check if valid URL
-        } catch {
-            showMessage('Invalid URL format. Use https://...', 'error');
-            return;
-        }
-
-        if (links.includes(newLink)) {
-            showMessage('⚠️ This link is already saved!', 'error');
-            return;
-        }
-
-        // Add and save
-        links.push(newLink);
-        localStorage.setItem('myLinks', JSON.stringify(links));
-        displayLinks();
-        input.value = '';
-        showMessage('✅ Link saved successfully!', 'success');
         
-        // Close admin panel after saving (optional)
-        // document.getElementById('adminPanel').classList.remove('show');
+        if (!newLink) {
+            showMessage('Please enter a URL', 'error');
+            return;
+        }
+        
+        try {
+            new URL(newLink);
+        } catch {
+            showMessage('❌ Invalid URL', 'error');
+            return;
+        }
+        
+        if (currentLinks.includes(newLink)) {
+            showMessage('⚠️ Already exists!', 'error');
+            return;
+        }
+        
+        showMessage('⏳ Saving link...', 'loading');
+        
+        try {
+            // 🔥 GitHub Issue create karo (bina token ke bhi kaam karega)
+            const response = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/issues`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    title: newLink,
+                    body: `🔗 Link added via admin panel on ${new Date().toLocaleString()}`,
+                    labels: [ISSUE_LABEL]
+                })
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                // Agar error aata hai toh user ko batayein
+                if (errorData.message && errorData.message.includes('API rate limit')) {
+                    showMessage('⚠️ Rate limit hit. Please wait a minute.', 'error');
+                } else {
+                    showMessage('❌ Failed to save: ' + (errorData.message || 'Unknown error'), 'error');
+                }
+                return;
+            }
+            
+            currentLinks.push(newLink);
+            displayLinks();
+            input.value = '';
+            showMessage('✅ Link saved successfully! (Visible on all devices)', 'success');
+            
+        } catch (error) {
+            showMessage('❌ Error: ' + error.message, 'error');
+        }
     }
 
-    // 🗑️ Delete link function
-    function deleteLink(index) {
-        if (!confirm('Delete this link?')) return;
-        links.splice(index, 1);
-        localStorage.setItem('myLinks', JSON.stringify(links));
-        displayLinks();
-        showMessage('🗑️ Link deleted.', 'success');
+    // ========== 🗑️ DELETE LINK (CLOSE ISSUE) ==========
+    async function deleteLink(link) {
+        if (!confirm(`Delete: ${link}?`)) return;
+        
+        showMessage('⏳ Deleting...', 'loading');
+        
+        try {
+            // Pehle issue number find karo
+            const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/issues?labels=${ISSUE_LABEL}&state=open&per_page=100`;
+            const response = await fetch(url);
+            const issues = await response.json();
+            
+            const issue = issues.find(issue => issue.title === link);
+            
+            if (!issue) {
+                showMessage('❌ Link not found in issues', 'error');
+                return;
+            }
+            
+            // Issue ko close karo (delete nahi, close)
+            const closeResponse = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/issues/${issue.number}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    state: 'closed'
+                })
+            });
+            
+            if (!closeResponse.ok) throw new Error('Failed to delete');
+            
+            currentLinks = currentLinks.filter(l => l !== link);
+            displayLinks();
+            showMessage('🗑️ Link deleted successfully!', 'success');
+            
+        } catch (error) {
+            showMessage('❌ Delete failed: ' + error.message, 'error');
+        }
     }
 
-    // 📋 Copy function
+    // ========== 📋 COPY LINK ==========
     function copyLink(link) {
         navigator.clipboard.writeText(link).then(() => {
             showMessage('✅ Copied: ' + link, 'success');
         }).catch(() => {
-            // Fallback method
             const textarea = document.createElement('textarea');
             textarea.value = link;
             document.body.appendChild(textarea);
@@ -142,18 +219,40 @@
         });
     }
 
-    // 💬 Show message
-    function showMessage(text, type) {
-        const msgDiv = document.getElementById('message');
-        msgDiv.textContent = text;
-        msgDiv.className = 'message ' + type;
-        setTimeout(() => {
-            msgDiv.className = 'message';
-            msgDiv.textContent = '';
-        }, 4000);
+    // ========== 🖥️ DISPLAY LINKS ==========
+    function displayLinks() {
+        const container = document.getElementById('linksContainer');
+        
+        if (currentLinks.length === 0) {
+            container.innerHTML = '<p class="empty-msg">📭 No links yet. Click "Admin" to add.</p>';
+            return;
+        }
+        
+        container.innerHTML = currentLinks.map(link => `
+            <div class="link-item">
+                <a href="${link}" target="_blank" rel="noopener">${link}</a>
+                <div>
+                    <button class="copy-btn" onclick="copyLink('${link}')">📋 Copy</button>
+                    <button class="delete-btn" onclick="deleteLink('${link}')">🗑️</button>
+                </div>
+            </div>
+        `).join('');
     }
 
-    // ⚙️ Toggle admin panel
+    // ========== 💬 SHOW MESSAGE ==========
+    function showMessage(text, type) {
+        const msgDiv = document.getElementById('message');
+        msgDiv.innerHTML = text;
+        msgDiv.className = 'message ' + type;
+        if (type !== 'loading') {
+            setTimeout(() => {
+                msgDiv.className = 'message';
+                msgDiv.innerHTML = '';
+            }, 5000);
+        }
+    }
+
+    // ========== ⚙️ TOGGLE ADMIN ==========
     function toggleAdmin() {
         const panel = document.getElementById('adminPanel');
         panel.classList.toggle('show');
@@ -162,8 +261,10 @@
         }
     }
 
-    // 🚀 Initial display
-    displayLinks();
+    // ========== 🚀 INIT ==========
+    fetchLinks();
+    // Auto-refresh har 15 seconds
+    setInterval(fetchLinks, 15000);
 </script>
 
 </body>
