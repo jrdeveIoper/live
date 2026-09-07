@@ -1,613 +1,249 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SnapChat</title>
-    <style>
-        /* --- FULLSCREEN CHAT (Same as before) --- */
-        *{margin:0;padding:0;box-sizing:border-box}
-        html,body{height:100%;width:100%;overflow:hidden}
-        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0a0a;color:#fff;display:flex;justify-content:center;align-items:center}
-        .container{width:100%;height:100%;max-width:500px;background:#121212;display:flex;flex-direction:column;border:1px solid #2a2a2a;position:relative;overflow:hidden}
-        @media(min-width:500px){.container{border-radius:24px;height:95vh}}
-        .header{padding:10px 16px;background:#1a1a1a;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #2a2a2a;flex-shrink:0;min-height:48px}
-        .header h1{font-size:17px;font-weight:700;color:#fff;letter-spacing:-0.3px}
-        .header h1 span{color:#fffc00}
-        .header-controls{display:flex;gap:5px;flex-wrap:wrap}
-        .header-controls .btn{background:#2a2a2a;border:none;color:#aaa;padding:4px 10px;border-radius:20px;font-size:11px;cursor:pointer;transition:0.2s}
-        .header-controls .btn:hover{background:#3a3a3a;color:#fff}
-        .header-controls .btn-warning{background:#fffc00;color:#000}
-        .header-controls .btn-warning:hover{background:#e6e600}
-        .header-controls .btn-danger{background:#ff3b30;color:#fff}
-        .header-controls .btn-danger:hover{background:#e0352b}
-        .header-controls .btn-broadcast{background:#8b5cf6;color:#fff}
-        .header-controls .btn-broadcast:hover{background:#7c3aed}
-        .notification-dot{display:inline-block;width:8px;height:8px;background:#ff3b30;border-radius:50%;margin-left:4px;animation:pulse 1s infinite}
-        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
-        .user-selector{display:flex;gap:5px;padding:6px 12px;background:#1a1a1a;border-bottom:1px solid #2a2a2a;flex-shrink:0;overflow-x:auto;flex-wrap:nowrap}
-        .user-selector::-webkit-scrollbar{display:none}
-        .user-btn{padding:4px 12px;border:none;border-radius:20px;font-size:12px;background:#2a2a2a;color:#888;cursor:pointer;transition:0.2s;white-space:nowrap}
-        .user-btn.active{background:#007aff;color:#fff}
-        .user-btn.admin-user{border:1px solid #ff3b30}
-        .user-btn.admin-locked{opacity:0.5;cursor:not-allowed;border-color:#555}
-        .user-btn.disabled{opacity:0.3;cursor:not-allowed}
-        .chat-box{flex:1;overflow-y:auto;padding:10px 14px;background:#121212;display:flex;flex-direction:column;gap:2px;min-height:0}
-        .chat-box::-webkit-scrollbar{width:3px}
-        .chat-box::-webkit-scrollbar-track{background:transparent}
-        .chat-box::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:10px}
-        .msg{max-width:78%;padding:5px 12px;border-radius:18px;font-size:14px;line-height:1.4;word-break:break-word;animation:fadeIn .2s ease;margin-bottom:1px}
-        @keyframes fadeIn{from{opacity:0;transform:scale(0.96)}to{opacity:1;transform:scale(1)}}
-        .msg.aish{background:#007aff;color:#fff;align-self:flex-start;border-bottom-left-radius:4px}
-        .msg.user1{background:#2c2c2e;color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
-        .msg.notification{background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff;align-self:center;max-width:90%;border-radius:12px;border:1px solid #7c3aed;box-shadow:0 2px 12px rgba(139,92,246,0.2)}
-        .msg.notification .sender{color:rgba(255,255,255,0.7)}
-        .msg.notification .time-row{opacity:0.6}
-        .msg.notification .notification-badge{background:#fffc00;color:#000;font-size:8px;padding:1px 8px;border-radius:10px;margin-left:6px;font-weight:700}
-        .msg.system{background:transparent;color:#555;font-size:11px;text-align:center;max-width:100%;padding:4px 0;align-self:center}
-        .msg .sender{font-size:9px;font-weight:600;opacity:0.6;margin-bottom:1px;letter-spacing:.2px}
-        .msg .sender .admin-badge{background:#ff3b30;color:#fff;font-size:7px;padding:0 6px;border-radius:10px;margin-left:4px}
-        .msg .text-content{font-size:14px;line-height:1.4}
-        .msg .text-content a{color:inherit;text-decoration:underline;opacity:.9}
-        .msg .time-row{display:flex;align-items:center;justify-content:flex-end;gap:4px;margin-top:1px;font-size:8px;opacity:.4}
-        .msg .time-row .delete-btn{background:rgba(255,255,255,0.15);border:none;color:#fff;padding:0 5px;border-radius:10px;font-size:8px;cursor:pointer;transition:.2s}
-        .msg .time-row .delete-btn:hover{background:rgba(255,50,50,0.4)}
-        .msg .e2ee-badge{font-size:7px;opacity:.3;margin-left:4px}
-        .msg .copy-btn{background:rgba(255,255,255,0.15);border:none;color:#fff;padding:0 6px;border-radius:10px;font-size:8px;cursor:pointer;transition:.2s;margin-left:4px}
-        .msg .copy-btn:hover{background:rgba(255,255,255,0.3)}
-        .status-bar{display:flex;justify-content:space-between;padding:3px 14px;background:#0f0f0f;font-size:10px;color:#555;border-bottom:1px solid #1a1a1a;flex-shrink:0;min-height:22px}
-        .status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px}
-        .status-dot.online{background:#34c759}
-        .status-dot.offline{background:#ff3b30}
-        .input-area{padding:8px 12px 12px;background:#1a1a1a;border-top:1px solid #2a2a2a;display:flex;gap:8px;flex-shrink:0;min-height:52px}
-        .input-area input{flex:1;padding:8px 14px;background:#2a2a2a;border:none;border-radius:24px;color:#fff;font-size:15px;outline:none;transition:.2s}
-        .input-area input::placeholder{color:#666}
-        .input-area input:focus{background:#333}
-        .input-area input:disabled{opacity:0.3;cursor:not-allowed}
-        .input-area button{padding:8px 16px;background:#007aff;border:none;border-radius:24px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:.2s;white-space:nowrap}
-        .input-area button:active{transform:scale(.95)}
-        .input-area button:disabled{opacity:0.3;pointer-events:none;cursor:not-allowed}
-        .popup-box{display:none;background:#1a1a1a;padding:12px 14px;border-bottom:1px solid #2a2a2a;flex-shrink:0}
-        .popup-box.show{display:block}
-        .popup-box strong{color:#fff;font-size:13px}
-        .popup-box p{color:#888;font-size:11px;margin:3px 0 6px}
-        .popup-box input{width:100%;padding:8px 12px;background:#2a2a2a;border:none;border-radius:24px;color:#fff;font-size:13px;outline:none;margin-bottom:6px}
-        .popup-box input::placeholder{color:#666}
-        .popup-box .btn{padding:6px 14px;border:none;border-radius:24px;font-size:12px;cursor:pointer}
-        .popup-box .btn-primary{background:#007aff;color:#fff}
-        .popup-box .btn-success{background:#34c759;color:#fff}
-        .popup-box .btn-danger{background:#ff3b30;color:#fff}
-        .popup-box .btn-secondary{background:#2a2a2a;color:#aaa}
-        .popup-box .btn-warning{background:#fffc00;color:#000}
-        .popup-box .btn-outline{background:transparent;border:1px solid #555;color:#aaa}
-        .popup-box .btn-broadcast{background:#8b5cf6;color:#fff}
-        .popup-box .btn-broadcast:hover{background:#7c3aed}
-        .key-hint{font-size:11px;color:#666;margin-top:4px;padding:6px 10px;background:#1a1a1a;border-radius:12px;border:1px dashed #333}
-        .key-hint strong{color:#fffc00}
-        .key-required-banner{background:#2a1a1a;border:1px solid #ff3b30;color:#ff6b6b;padding:20px;text-align:center;border-radius:16px;margin:20px 0}
-        .key-required-banner strong{color:#fffc00;font-size:18px}
-        .request-item{display:flex;justify-content:space-between;align-items:center;background:#2a2a2a;padding:6px 10px;border-radius:16px;margin-bottom:4px}
-        .request-item .name{font-weight:600;color:#fff;font-size:12px}
-        .request-item .id{font-size:9px;color:#666;margin-left:6px}
-        .request-item .time{font-size:9px;color:#555}
-        .request-item .actions{display:flex;gap:4px}
-        .contact-section{padding:5px 12px;background:#0f0f0f;border-top:1px solid #1a1a1a;text-align:center;font-size:10px;color:#555;flex-shrink:0;min-height:28px}
-        .contact-section a{color:#007aff;text-decoration:none;margin:0 5px}
-        .contact-section a:hover{text-decoration:underline}
-        .user-management{display:flex;flex-wrap:wrap;gap:4px;padding:4px 0}
-        .user-tag{display:inline-flex;align-items:center;background:#2a2a2a;padding:3px 10px;border-radius:16px;font-size:11px;gap:4px;border:1px solid #444}
-        .user-tag .remove-btn{background:rgba(255,50,50,0.3);border:none;color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;cursor:pointer;padding:0;line-height:16px;text-align:center;transition:.2s}
-        .user-tag .remove-btn:hover{background:rgba(255,50,50,0.7)}
-        .broadcast-indicator{background:#8b5cf6;color:#fff;font-size:9px;padding:2px 10px;border-radius:12px;margin-left:6px}
-        .refresh-users-btn{background:#2a2a2a;border:1px solid #555;color:#aaa;padding:3px 10px;border-radius:16px;font-size:10px;cursor:pointer;margin-left:6px}
-        .refresh-users-btn:hover{background:#3a3a3a;color:#fff}
-        @media(max-width:500px){.container{height:100%;border-radius:0}.msg{max-width:85%;font-size:13px}.input-area input{font-size:14px}}
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Usecase</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;width:100%;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0a0a;color:#fff;display:flex;justify-content:center;align-items:center}
+.container{width:100%;height:100%;max-width:500px;background:#121212;display:flex;flex-direction:column;border:1px solid #2a2a2a;position:relative;overflow:hidden}
+@media(min-width:500px){.container{border-radius:24px;height:95vh}}
+.header{padding:10px 16px;background:#1a1a1a;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #2a2a2a;flex-shrink:0;min-height:48px}
+.header h1{font-size:17px;font-weight:700;color:#fff;letter-spacing:-0.3px}
+.header h1 span{color:#fffc00}
+.header-controls{display:flex;gap:5px;flex-wrap:wrap}
+.header-controls .btn{background:#2a2a2a;border:none;color:#aaa;padding:4px 10px;border-radius:20px;font-size:11px;cursor:pointer;transition:.2s}
+.header-controls .btn:hover{background:#3a3a3a;color:#fff}
+.header-controls .btn-warning{background:#fffc00;color:#000}
+.header-controls .btn-warning:hover{background:#e6e600}
+.header-controls .btn-danger{background:#ff3b30;color:#fff}
+.header-controls .btn-danger:hover{background:#e0352b}
+.header-controls .btn-broadcast{background:#8b5cf6;color:#fff}
+.header-controls .btn-broadcast:hover{background:#7c3aed}
+.notification-dot{display:inline-block;width:8px;height:8px;background:#ff3b30;border-radius:50%;margin-left:4px;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.user-selector{display:flex;gap:5px;padding:6px 12px;background:#1a1a1a;border-bottom:1px solid #2a2a2a;flex-shrink:0;overflow-x:auto;flex-wrap:nowrap}
+.user-selector::-webkit-scrollbar{display:none}
+.user-btn{padding:4px 12px;border:none;border-radius:20px;font-size:12px;background:#2a2a2a;color:#888;cursor:pointer;transition:.2s;white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
+.user-btn.active{background:#007aff;color:#fff}
+.user-btn.admin-user{border:1px solid #ff3b30}
+.user-btn.admin-locked{opacity:.5;cursor:not-allowed;border-color:#555}
+.user-btn.disabled{opacity:.3;cursor:not-allowed}
+.user-btn .del-user-btn{background:rgba(255,50,50,0.3);border:none;color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;cursor:pointer;padding:0;line-height:16px;text-align:center;transition:.2s}
+.user-btn .del-user-btn:hover{background:rgba(255,50,50,0.8)}
+.chat-box{flex:1;overflow-y:auto;padding:10px 14px;background:#121212;display:flex;flex-direction:column;gap:2px;min-height:0}
+.chat-box::-webkit-scrollbar{width:3px}
+.chat-box::-webkit-scrollbar-track{background:transparent}
+.chat-box::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:10px}
+.msg{max-width:78%;padding:5px 12px;border-radius:18px;font-size:14px;line-height:1.4;word-break:break-word;animation:fadeIn .2s ease;margin-bottom:1px;position:relative}
+@keyframes fadeIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+.msg.aish{background:#007aff;color:#fff;align-self:flex-start;border-bottom-left-radius:4px}
+.msg.user1{background:#2c2c2e;color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.msg.notification{background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff;align-self:center;max-width:90%;border-radius:12px;border:1px solid #7c3aed;box-shadow:0 2px 12px rgba(139,92,246,.2)}
+.msg.notification .sender{color:rgba(255,255,255,.7)}
+.msg.notification .time-row{opacity:.6}
+.msg.notification .notification-badge{background:#fffc00;color:#000;font-size:8px;padding:1px 8px;border-radius:10px;margin-left:6px;font-weight:700}
+.msg.system{background:transparent;color:#555;font-size:11px;text-align:center;max-width:100%;padding:4px 0;align-self:center}
+.msg .sender{font-size:9px;font-weight:600;opacity:.6;margin-bottom:1px;letter-spacing:.2px}
+.msg .sender .admin-badge{background:#ff3b30;color:#fff;font-size:7px;padding:0 6px;border-radius:10px;margin-left:4px}
+.msg .text-content{font-size:14px;line-height:1.4}
+.msg .text-content a{color:inherit;text-decoration:underline;opacity:.9}
+.msg .time-row{display:flex;align-items:center;justify-content:flex-end;gap:4px;margin-top:1px;font-size:8px;opacity:.4}
+.msg .time-row .action-btn{background:rgba(255,255,255,0.12);border:none;color:#fff;padding:0 6px;border-radius:10px;font-size:8px;cursor:pointer;transition:.2s}
+.msg .time-row .action-btn:hover{background:rgba(255,255,255,0.25)}
+.msg .e2ee-badge{font-size:7px;opacity:.3;margin-left:4px}
+.msg .copy-btn{background:rgba(255,255,255,0.12);border:none;color:#fff;padding:0 6px;border-radius:10px;font-size:8px;cursor:pointer;transition:.2s;margin-left:4px}
+.msg .copy-btn:hover{background:rgba(255,255,255,0.25)}
+.status-bar{display:flex;justify-content:space-between;padding:3px 14px;background:#0f0f0f;font-size:10px;color:#555;border-bottom:1px solid #1a1a1a;flex-shrink:0;min-height:22px}
+.status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px}
+.status-dot.online{background:#34c759}
+.status-dot.offline{background:#ff3b30}
+.input-area{padding:8px 12px 12px;background:#1a1a1a;border-top:1px solid #2a2a2a;display:flex;gap:8px;flex-shrink:0;min-height:52px}
+.input-area input{flex:1;padding:8px 14px;background:#2a2a2a;border:none;border-radius:24px;color:#fff;font-size:15px;outline:none;transition:.2s}
+.input-area input::placeholder{color:#666}
+.input-area input:focus{background:#333}
+.input-area input:disabled{opacity:.3;cursor:not-allowed}
+.input-area button{padding:8px 16px;background:#007aff;border:none;border-radius:24px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:.2s;white-space:nowrap}
+.input-area button:active{transform:scale(.95)}
+.input-area button:disabled{opacity:.3;pointer-events:none;cursor:not-allowed}
+.popup-box{display:none;background:#1a1a1a;padding:12px 14px;border-bottom:1px solid #2a2a2a;flex-shrink:0}
+.popup-box.show{display:block}
+.popup-box strong{color:#fff;font-size:13px}
+.popup-box p{color:#888;font-size:11px;margin:3px 0 6px}
+.popup-box input{width:100%;padding:8px 12px;background:#2a2a2a;border:none;border-radius:24px;color:#fff;font-size:13px;outline:none;margin-bottom:6px}
+.popup-box input::placeholder{color:#666}
+.popup-box .btn{padding:6px 14px;border:none;border-radius:24px;font-size:12px;cursor:pointer}
+.popup-box .btn-primary{background:#007aff;color:#fff}
+.popup-box .btn-success{background:#34c759;color:#fff}
+.popup-box .btn-danger{background:#ff3b30;color:#fff}
+.popup-box .btn-secondary{background:#2a2a2a;color:#aaa}
+.popup-box .btn-warning{background:#fffc00;color:#000}
+.popup-box .btn-outline{background:transparent;border:1px solid #555;color:#aaa}
+.popup-box .btn-broadcast{background:#8b5cf6;color:#fff}
+.popup-box .btn-broadcast:hover{background:#7c3aed}
+.key-hint{font-size:11px;color:#666;margin-top:4px;padding:6px 10px;background:#1a1a1a;border-radius:12px;border:1px dashed #333}
+.key-hint strong{color:#fffc00}
+.key-required-banner{background:#2a1a1a;border:1px solid #ff3b30;color:#ff6b6b;padding:20px;text-align:center;border-radius:16px;margin:20px 0}
+.key-required-banner strong{color:#fffc00;font-size:18px}
+.request-item{display:flex;justify-content:space-between;align-items:center;background:#2a2a2a;padding:6px 10px;border-radius:16px;margin-bottom:4px}
+.request-item .name{font-weight:600;color:#fff;font-size:12px}
+.request-item .id{font-size:9px;color:#666;margin-left:6px}
+.request-item .time{font-size:9px;color:#555}
+.request-item .actions{display:flex;gap:4px}
+.contact-section{padding:5px 12px;background:#0f0f0f;border-top:1px solid #1a1a1a;text-align:center;font-size:10px;color:#555;flex-shrink:0;min-height:28px}
+.contact-section a{color:#007aff;text-decoration:none;margin:0 5px}
+.contact-section a:hover{text-decoration:underline}
+.user-management{display:flex;flex-wrap:wrap;gap:4px;padding:4px 0}
+.user-tag{display:inline-flex;align-items:center;background:#2a2a2a;padding:3px 10px;border-radius:16px;font-size:11px;gap:4px;border:1px solid #444}
+.user-tag .remove-btn{background:rgba(255,50,50,0.3);border:none;color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;cursor:pointer;padding:0;line-height:16px;text-align:center;transition:.2s}
+.user-tag .remove-btn:hover{background:rgba(255,50,50,0.7)}
+.broadcast-indicator{background:#8b5cf6;color:#fff;font-size:9px;padding:2px 10px;border-radius:12px;margin-left:6px}
+.refresh-users-btn{background:#2a2a2a;border:1px solid #555;color:#aaa;padding:3px 10px;border-radius:16px;font-size:10px;cursor:pointer;margin-left:6px}
+.refresh-users-btn:hover{background:#3a3a3a;color:#fff}
+@media(max-width:500px){.container{height:100%;border-radius:0}.msg{max-width:85%;font-size:13px}.input-area input{font-size:14px}}
+</style>
 </head>
 <body>
-
 <div class="container" id="app">
-    <!-- HEADER -->
-    <div class="header">
-        <h1>💬 <span>Snap</span>Chat</h1>
-        <div class="header-controls">
-            <button class="btn btn-warning" onclick="toggleEncrypt()">🔑</button>
-            <button class="btn btn-broadcast" onclick="toggleBroadcast()">📢</button>
-            <button class="btn" onclick="toggleRequest()">📩 <span id="requestBadge" style="display:none;" class="notification-dot"></span></button>
-            <button class="btn" onclick="toggleAdmin()">🔐</button>
-        </div>
-    </div>
-
-    <!-- ENCRYPT BOX -->
-    <div class="popup-box" id="encryptBox">
-        <strong>🔑 Encryption Key</strong>
-        <p>Set a secret key to encrypt messages. <strong>Don't forget it!</strong></p>
-        <input type="password" id="encryptKeyInput" placeholder="Enter encryption key..." />
-        <input type="text" id="encryptHintInput" placeholder="Hint (e.g., My pet's name)" style="margin-top:4px;" />
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
-            <button class="btn btn-primary" onclick="setEncryptionKey()">🔐 Set Key</button>
-            <button class="btn btn-outline" onclick="exportKey()">💾 Export</button>
-            <button class="btn btn-outline" onclick="document.getElementById('importKeyInput').click()">📂 Import</button>
-            <input type="file" id="importKeyInput" accept=".json" style="display:none;" onchange="importKey(event)" />
-        </div>
-        <div id="encryptStatus" style="margin-top:4px;font-size:11px;color:#888;"></div>
-        <div id="keyHintDisplay" class="key-hint" style="display:none;"></div>
-    </div>
-
-    <!-- BROADCAST BOX -->
-    <div class="popup-box" id="broadcastBox">
-        <strong>📢 Admin Broadcast</strong>
-        <p>Send a notification to all users (text or link). Users can only read & copy.</p>
-        <input type="text" id="broadcastInput" placeholder="Type your broadcast message or link..." />
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
-            <button class="btn btn-broadcast" onclick="sendBroadcast()">📢 Send Broadcast</button>
-        </div>
-        <div id="broadcastStatus" style="margin-top:4px;font-size:11px;color:#888;"></div>
-    </div>
-
-    <!-- ADMIN PANEL -->
-    <div class="popup-box" id="passwordBox">
-        <strong>🔐 Admin Panel</strong>
-        <p>Default: <strong>admin123</strong></p>
-        <input type="password" id="adminPassword" placeholder="Enter admin password..." />
-        <button class="btn btn-primary" onclick="verifyAdmin()">✅ Verify</button>
-        <div id="adminStatus" style="margin-top:4px;font-size:11px;color:#888;"></div>
-        <div id="userManagement" style="margin-top:8px;display:none;">
-            <strong style="color:#fff;font-size:12px;">👥 Manage Users 
-                <button class="refresh-users-btn" onclick="refreshUserList()">🔄 Refresh</button>
-            </strong>
-            <div id="userListTags" class="user-management"></div>
-            <p style="color:#555;font-size:10px;margin-top:4px;">Click ✕ to remove user (their messages will be deleted)</p>
-        </div>
-        <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
-            <button class="btn btn-danger" onclick="deleteAllMessages()" id="deleteAllBtn" style="display:none;">🗑️ Delete All</button>
-            <button class="btn btn-danger" onclick="deleteAllBroadcasts()" id="deleteBroadcastBtn" style="display:none;">🗑️ Delete Broadcasts</button>
-        </div>
-    </div>
-
-    <!-- REQUEST BOX -->
-    <div class="popup-box" id="requestBox">
-        <strong>📩 Join Request</strong>
-        <p>Enter a username to request joining the chat.</p>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
-            <input type="text" id="requestName" placeholder="Choose a username" style="flex:1;min-width:100px;" />
-            <button class="btn btn-primary" onclick="sendRequest()">📤 Send</button>
-        </div>
-        <div id="requestStatus" style="margin-top:3px;font-size:11px;color:#888;"></div>
-        <div id="requestIdDisplay" style="font-size:10px;color:#555;"></div>
-        <div id="pendingRequests" style="margin-top:6px;"></div>
-    </div>
-
-    <!-- USER SELECTOR -->
-    <div class="user-selector" id="userSelector">
-        <button class="user-btn admin-user active" data-user="aish" onclick="setUser('aish')">👑 @aish</button>
-    </div>
-
-    <!-- STATUS BAR -->
-    <div class="status-bar">
-        <span><span class="status-dot online" id="statusDot"></span> <span id="statusText">Connected</span></span>
-        <span id="msgCount">0 messages</span>
-    </div>
-
-    <!-- CHAT BOX -->
-    <div class="chat-box" id="chatBox">
-        <div class="msg system">💬 No messages yet. Start chatting!</div>
-    </div>
-
-    <!-- INPUT AREA -->
-    <div class="input-area">
-        <input type="text" id="chatInput" placeholder="Type a message..." />
-        <button onclick="sendMessage()">Send</button>
-    </div>
-
-    <!-- CONTACT -->
-    <div class="contact-section">
-        <a href="https://facebook.com/yadavaiswary" target="_blank">📘</a>
-        <a href="https://instagram.com/yadavaiswary" target="_blank">📷</a>
-        <a href="https://twitter.com/yadavaiswary" target="_blank">🐦</a>
-        <a href="mailto:queries.aish@gmail.com">📧</a>
-    </div>
+<div class="header"><h1>💬 <span>Use</span>case</h1>
+<div class="header-controls">
+<button class="btn btn-warning" onclick="toggleEncrypt()">🔑</button>
+<button class="btn btn-broadcast" onclick="toggleBroadcast()">📢</button>
+<button class="btn" onclick="toggleRequest()">📩<span id="requestBadge" style="display:none" class="notification-dot"></span></button>
+<button class="btn" onclick="toggleAdmin()">🔐</button>
+</div></div>
+<div class="popup-box" id="encryptBox">
+<strong>🔑 Encryption Key</strong>
+<p>Set a secret key to encrypt messages. <strong>Don't forget it!</strong></p>
+<input type="password" id="encryptKeyInput" placeholder="Enter encryption key..." />
+<input type="text" id="encryptHintInput" placeholder="Hint" style="margin-top:4px" />
+<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
+<button class="btn btn-primary" onclick="setEncryptionKey()">🔐 Set Key</button>
+<button class="btn btn-outline" onclick="exportKey()">💾 Export</button>
+<button class="btn btn-outline" onclick="document.getElementById('importKeyInput').click()">📂 Import</button>
+<input type="file" id="importKeyInput" accept=".json" style="display:none" onchange="importKey(event)" />
 </div>
-
+<div id="encryptStatus" style="margin-top:4px;font-size:11px;color:#888"></div>
+<div id="keyHintDisplay" class="key-hint" style="display:none"></div>
+</div>
+<div class="popup-box" id="broadcastBox">
+<strong>📢 Admin Broadcast</strong>
+<p>Send a notification to all users (text or link). Users can only read & copy.</p>
+<input type="text" id="broadcastInput" placeholder="Broadcast message or link..." />
+<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
+<button class="btn btn-broadcast" onclick="sendBroadcast()">📢 Send</button>
+</div>
+<div id="broadcastStatus" style="margin-top:4px;font-size:11px;color:#888"></div>
+</div>
+<div class="popup-box" id="passwordBox">
+<strong>🔐 Admin Panel</strong>
+<p>Enter admin password to verify.</p>
+<input type="password" id="adminPassword" placeholder="Enter admin password..." />
+<button class="btn btn-primary" onclick="verifyAdmin()">✅ Verify</button>
+<div id="adminStatus" style="margin-top:4px;font-size:11px;color:#888"></div>
+<div id="userManagement" style="margin-top:8px;display:none">
+<strong style="color:#fff;font-size:12px">👥 Manage Users <button class="refresh-users-btn" onclick="refreshUserList()">🔄</button></strong>
+<div id="userListTags" class="user-management"></div>
+</div>
+<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+<button class="btn btn-danger" onclick="deleteAllMessages()" id="deleteAllBtn" style="display:none">🗑️ Delete All</button>
+<button class="btn btn-danger" onclick="deleteAllBroadcasts()" id="deleteBroadcastBtn" style="display:none">🗑️ Delete Broadcasts</button>
+</div>
+</div>
+<div class="popup-box" id="requestBox">
+<strong>📩 Join Request</strong>
+<p>Enter a username to request joining the chat.</p>
+<div style="display:flex;gap:6px;flex-wrap:wrap">
+<input type="text" id="requestName" placeholder="Choose a username" style="flex:1;min-width:100px" />
+<button class="btn btn-primary" onclick="sendRequest()">📤 Send</button>
+</div>
+<div id="requestStatus" style="margin-top:3px;font-size:11px;color:#888"></div>
+<div id="requestIdDisplay" style="font-size:10px;color:#555"></div>
+<div id="pendingRequests" style="margin-top:6px"></div>
+</div>
+<div class="user-selector" id="userSelector">
+<button class="user-btn admin-user active" data-user="aish" onclick="setUser('aish')">👑 @aish</button>
+</div>
+<div class="status-bar">
+<span><span class="status-dot online" id="statusDot"></span><span id="statusText">Connected</span></span>
+<span id="msgCount">0 messages</span>
+</div>
+<div class="chat-box" id="chatBox"><div class="msg system">💬 No messages yet.</div></div>
+<div class="input-area">
+<input type="text" id="chatInput" placeholder="Type a message..." />
+<button onclick="sendMessage()">Send</button>
+</div>
+<div class="contact-section">
+<a href="https://facebook.com/yadavaiswary" target="_blank">📘</a>
+<a href="https://instagram.com/yadavaiswary" target="_blank">📷</a>
+<a href="https://twitter.com/yadavaiswary" target="_blank">🐦</a>
+<a href="mailto:queries.aish@gmail.com">📧</a>
+</div>
+</div>
 <script>
-    // ============================================================
-    // 🛡️ PROTECTION
-    // ============================================================
-    (function protect() {
-        document.addEventListener('contextmenu', e => e.preventDefault());
-        document.addEventListener('keydown', e => {
-            if (e.key === 'F12' || 
-                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
-                (e.ctrlKey && e.key === 'u')) {
-                e.preventDefault();
-                alert('🔒 This action is disabled for security.');
-                return false;
-            }
-        });
-        document.addEventListener('selectstart', e => e.preventDefault());
-        document.addEventListener('copy', e => e.preventDefault());
-        console.log('%c🔒 This site is protected.', 'color:#ff3b30;font-size:16px;font-weight:bold;');
-    })();
+// ========== PROTECTION ==========
+(function(){document.addEventListener('contextmenu',e=>e.preventDefault());document.addEventListener('keydown',e=>{if(e.key==='F12'||(e.ctrlKey&&e.shiftKey&&(e.key==='I'||e.key==='J'||e.key==='C'))||(e.ctrlKey&&e.key==='u')){e.preventDefault();alert('🔒 Disabled.');return false}});document.addEventListener('selectstart',e=>e.preventDefault());document.addEventListener('copy',e=>e.preventDefault())})();
 
-    // ============================================================
-    // 🔥 CHAT SYSTEM + KEY MANDATORY + BROADCAST + USER DELETE
-    // ============================================================
-    const BIN_ID='6a9e8273ac6210605aaef916',ADMIN_PASSWORD='admin123',MAX_USERS=4;
-    let messages=[],currentUser='aish',isAdmin=false,isSaving=false,users=['aish'],pendingRequests=[],myUniqueId='',chatEnabled=false;
-    let encryptionKey = localStorage.getItem('e2ee_key') || '';
-    let keyHint = localStorage.getItem('e2ee_hint') || '';
+// ========== MAIN ==========
+const BIN='6a9e8273ac6210605aaef916',PASS='admin123',MAXU=4;let msgs=[],cur='aish',adm=!1,sav=!1,usrs=['aish'],reqs=[],uid='',chatEn=!1,key=localStorage.getItem('e2ee_key')||'',hint=localStorage.getItem('e2ee_hint')||'';
 
-    // ========== 🔐 CHECK KEY STATUS ==========
-    function isKeySet() { return encryptionKey && encryptionKey.length > 0; }
+function isKey(){return key&&key.length>0}
+async function enc(t){if(!key)return{encrypted:t,iv:null};try{const e=new TextEncoder(),k=await crypto.subtle.importKey('raw',e.encode(key.padEnd(32,' ').slice(0,32)),{name:'AES-GCM'},!1,['encrypt','decrypt']),iv=crypto.getRandomValues(new Uint8Array(12)),enc=await crypto.subtle.encrypt({name:'AES-GCM',iv},k,e.encode(t)),ea=new Uint8Array(enc),iva=new Uint8Array(iv);return{encrypted:btoa(String.fromCharCode(...ea)),iv:btoa(String.fromCharCode(...iva))}}catch(e){return{encrypted:t,iv:null}}}
+async function dec(e,i){if(!key||!i)return e;try{const en=new TextEncoder(),k=await crypto.subtle.importKey('raw',en.encode(key.padEnd(32,' ').slice(0,32)),{name:'AES-GCM'},!1,['encrypt','decrypt']),eb=Uint8Array.from(atob(e),c=>c.charCodeAt(0)),ib=Uint8Array.from(atob(i),c=>c.charCodeAt(0)),d=await crypto.subtle.decrypt({name:'AES-GCM',iv:ib},k,eb);return new TextDecoder().decode(d)}catch(e){return'🔒 [Encrypted - wrong key?]'}}
 
-    // ========== 🔑 KEY MANAGEMENT ==========
-    function setEncryptionKey() {
-        const keyInput = document.getElementById('encryptKeyInput');
-        const hintInput = document.getElementById('encryptHintInput');
-        const key = keyInput.value.trim();
-        const hint = hintInput.value.trim();
-        if (!key) {
-            document.getElementById('encryptStatus').textContent = '❌ Please enter a key!';
-            document.getElementById('encryptStatus').style.color = '#ff3b30';
-            return;
-        }
-        encryptionKey = key;
-        localStorage.setItem('e2ee_key', key);
-        if (hint) { keyHint = hint; localStorage.setItem('e2ee_hint', hint); }
-        document.getElementById('encryptStatus').textContent = '✅ Key set! ' + (hint ? 'Hint saved.' : '');
-        document.getElementById('encryptStatus').style.color = '#34c759';
-        document.getElementById('encryptBox').classList.remove('show');
-        if (keyHint) {
-            const hintDisplay = document.getElementById('keyHintDisplay');
-            hintDisplay.innerHTML = '💡 <strong>Hint:</strong> ' + keyHint;
-            hintDisplay.style.display = 'block';
-        }
-        keyInput.value = '';
-        hintInput.value = '';
-        enableFeatures();
-        fetchMessages();
-    }
+function setEncryptionKey(){const i=document.getElementById('encryptKeyInput'),k=i.value.trim(),h=document.getElementById('encryptHintInput').value.trim();if(!k){document.getElementById('encryptStatus').textContent='❌ Enter key!';document.getElementById('encryptStatus').style.color='#ff3b30';return}key=k;localStorage.setItem('e2ee_key',k);if(h){hint=h;localStorage.setItem('e2ee_hint',h)}document.getElementById('encryptStatus').textContent='✅ Key set!';document.getElementById('encryptStatus').style.color='#34c759';document.getElementById('encryptBox').classList.remove('show');if(hint){const d=document.getElementById('keyHintDisplay');d.innerHTML='💡 <strong>Hint:</strong> '+hint;d.style.display='block'}i.value='';document.getElementById('encryptHintInput').value='';enableF();fetchM()}
+function enableF(){document.querySelectorAll('.user-btn').forEach(b=>b.classList.remove('disabled'));document.getElementById('chatInput').disabled=!1;document.getElementById('chatInput').placeholder='Type a message...';document.querySelector('.input-area button').disabled=!1;showS('🔓 Active','success');dispM()}
+function disableF(){document.querySelectorAll('.user-btn').forEach(b=>b.classList.add('disabled'));document.getElementById('chatInput').disabled=!0;document.getElementById('chatInput').placeholder='🔒 Set encryption key (🔑)';document.querySelector('.input-area button').disabled=!0;document.getElementById('chatBox').innerHTML='<div class="key-required-banner"><div style="font-size:48px;margin-bottom:12px">🔒</div><strong>Encryption Key Required</strong><p style="margin-top:8px;color:#aaa;font-size:14px">Click <strong>🔑</strong> to set your key.</p>'+(hint?'<p style="margin-top:12px;color:#fffc00;font-size:13px">💡 Hint: '+hint+'</p>':'')+'</div>';document.getElementById('msgCount').textContent='🔒 Locked'}
+function exportKey(){if(!key){alert('❌ No key!');return}const d={key:key,hint:hint||'',exportedAt:new Date().toISOString()},b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='chat_key_backup.json';a.click();URL.revokeObjectURL(u);document.getElementById('encryptStatus').textContent='✅ Exported!';document.getElementById('encryptStatus').style.color='#34c759'}
+function importKey(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=function(e){try{const d=JSON.parse(e.target.result);if(d.key){key=d.key;localStorage.setItem('e2ee_key',d.key);if(d.hint){hint=d.hint;localStorage.setItem('e2ee_hint',d.hint)}document.getElementById('encryptStatus').textContent='✅ Imported!';document.getElementById('encryptStatus').style.color='#34c759';document.getElementById('encryptBox').classList.remove('show');if(hint){const hd=document.getElementById('keyHintDisplay');hd.innerHTML='💡 <strong>Hint:</strong> '+hint;hd.style.display='block'}enableF();fetchM()}else{document.getElementById('encryptStatus').textContent='❌ Invalid file!';document.getElementById('encryptStatus').style.color='#ff3b30'}}catch(err){document.getElementById('encryptStatus').textContent='❌ Error reading file!';document.getElementById('encryptStatus').style.color='#ff3b30'}};r.readAsText(f);e.target.value=''}
+function toggleEncrypt(){const b=document.getElementById('encryptBox');b.classList.toggle('show');if(b.classList.contains('show')){document.getElementById('encryptKeyInput').focus();if(hint){const d=document.getElementById('keyHintDisplay');d.innerHTML='💡 <strong>Hint:</strong> '+hint;d.style.display='block'}else document.getElementById('keyHintDisplay').style.display='none'}}
 
-    function enableFeatures() {
-        document.querySelectorAll('.user-btn').forEach(b => b.classList.remove('disabled'));
-        document.getElementById('chatInput').disabled = false;
-        document.getElementById('chatInput').placeholder = 'Type a message...';
-        document.querySelector('.input-area button').disabled = false;
-        showStatus('🔓 Key active', 'success');
-        displayMessages();
-    }
+function toggleBroadcast(){if(!adm){showS('❌ Admin login required!','error');return}const b=document.getElementById('broadcastBox');b.classList.toggle('show');if(b.classList.contains('show')){document.getElementById('broadcastInput').focus();document.getElementById('broadcastStatus').textContent=''}}
+async function sendBroadcast(){if(!adm){showS('❌ Admin login!','error');return}if(!isKey()){showS('❌ Set key first!','error');return}const i=document.getElementById('broadcastInput'),t=i.value.trim();if(!t){document.getElementById('broadcastStatus').textContent='❌ Enter message!';document.getElementById('broadcastStatus').style.color='#ff3b30';return}if(sav)return;const e=await enc(t),bm={id:'b_'+Date.now(),user:'aish',text:e.encrypted,iv:e.iv,encrypted:!0,isBroadcast:!0,timestamp:new Date().toISOString()};sav=!0;document.getElementById('broadcastStatus').textContent='⏳ Sending...';document.getElementById('broadcastStatus').style.color='#fffc00';try{const u=msgs.filter(m=>!m.isSystem&&!m.isRequest),sm=msgs.find(m=>m.isSystem);if(sm)u.push(sm);const rm=msgs.find(m=>m.isRequest);if(rm)u.push(rm);u.push(bm);const r=await fetch(`https://api.jsonbin.io/v3/b/${BIN}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:u})});if(!r.ok)throw new Error('Failed');msgs=u;i.value='';document.getElementById('broadcastStatus').textContent='✅ Sent!';document.getElementById('broadcastStatus').style.color='#34c759';document.getElementById('broadcastBox').classList.remove('show');await dispM();showS('📢 Broadcast sent!','success')}catch(e){document.getElementById('broadcastStatus').textContent='❌ '+e.message;document.getElementById('broadcastStatus').style.color='#ff3b30'}finally{sav=!1}}
+async function deleteAllBroadcasts(){if(!adm)return showS('❌ Admin login!','error');const c=msgs.filter(m=>m.isBroadcast).length;if(c===0)return showS('💬 No broadcasts!','info');if(!confirm('Delete all '+c+' broadcasts?'))return;if(sav)return;sav=!0;showS('⏳ Deleting...','loading');try{const u=msgs.filter(m=>!m.isBroadcast),r=await fetch(`https://api.jsonbin.io/v3/b/${BIN}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:u})});if(!r.ok)throw new Error('Failed');msgs=u;await dispM();showS('🗑️ '+c+' broadcasts deleted!','success')}catch(e){showS('❌ Delete failed: '+e.message,'error')}finally{sav=!1}}
 
-    function disableFeatures() {
-        document.querySelectorAll('.user-btn').forEach(b => b.classList.add('disabled'));
-        document.getElementById('chatInput').disabled = true;
-        document.getElementById('chatInput').placeholder = '🔒 Set encryption key first (🔑)';
-        document.querySelector('.input-area button').disabled = true;
-        const box = document.getElementById('chatBox');
-        box.innerHTML = `
-            <div class="key-required-banner">
-                <div style="font-size:48px;margin-bottom:12px;">🔒</div>
-                <strong>Encryption Key Required</strong>
-                <p style="margin-top:8px;color:#aaa;font-size:14px;">Click <strong>🔑</strong> in header to set your encryption key.<br>Without it, you cannot view or send messages.</p>
-                ${keyHint ? `<p style="margin-top:12px;color:#fffc00;font-size:13px;">💡 Hint: ${keyHint}</p>` : ''}
-            </div>
-        `;
-        document.getElementById('msgCount').textContent = '🔒 Locked';
-    }
+const ADEV=localStorage.getItem('admin_device_id')||'aish_master';if(!localStorage.getItem('admin_device_id'))localStorage.setItem('admin_device_id','aish_master');
 
-    function exportKey() {
-        if (!encryptionKey) { alert('❌ No key set!'); return; }
-        const data = { key: encryptionKey, hint: keyHint || '', exportedAt: new Date().toISOString() };
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'chat_key_backup.json';
-        a.click();
-        URL.revokeObjectURL(url);
-        document.getElementById('encryptStatus').textContent = '✅ Key exported!';
-        document.getElementById('encryptStatus').style.color = '#34c759';
-    }
+function setUser(u){if(!isKey()){showS('❌ Set key first! (🔑)','error');return}if(u==='aish'){const did=localStorage.getItem('admin_device_id'),mid=localStorage.getItem('chat_user_id')||'';if(did!=='aish_master'&&mid!==did){showS('❌ Admin restricted!','error');return}}if(!usrs.includes(u)){showS('❌ User not found!','error');return}cur=u;document.querySelectorAll('.user-btn').forEach(b=>b.classList.toggle('active',b.dataset.user===u));document.getElementById('chatInput').placeholder=u==='aish'?'Message as @aish...':'Message as @'+u+'...';if(u!=='aish'&&!chatEn){document.getElementById('chatInput').disabled=!0;document.getElementById('chatInput').placeholder='⏳ Wait for admin approval...'}else document.getElementById('chatInput').disabled=!1}
 
-    function importKey(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                const data = JSON.parse(e.target.result);
-                if (data.key) {
-                    encryptionKey = data.key;
-                    localStorage.setItem('e2ee_key', data.key);
-                    if (data.hint) { keyHint = data.hint; localStorage.setItem('e2ee_hint', data.hint); }
-                    document.getElementById('encryptStatus').textContent = '✅ Key imported!';
-                    document.getElementById('encryptStatus').style.color = '#34c759';
-                    document.getElementById('encryptBox').classList.remove('show');
-                    if (keyHint) {
-                        const hintDisplay = document.getElementById('keyHintDisplay');
-                        hintDisplay.innerHTML = '💡 <strong>Hint:</strong> ' + keyHint;
-                        hintDisplay.style.display = 'block';
-                    }
-                    enableFeatures();
-                    fetchMessages();
-                } else {
-                    document.getElementById('encryptStatus').textContent = '❌ Invalid backup file!';
-                    document.getElementById('encryptStatus').style.color = '#ff3b30';
-                }
-            } catch (err) {
-                document.getElementById('encryptStatus').textContent = '❌ Error reading file!';
-                document.getElementById('encryptStatus').style.color = '#ff3b30';
-            }
-        };
-        reader.readAsText(file);
-        event.target.value = '';
-    }
+function verifyAdmin(){const i=document.getElementById('adminPassword');if(i.value.trim()===PASS){adm=!0;localStorage.setItem('admin_device_id','aish_master');document.getElementById('passwordBox').classList.remove('show');document.getElementById('deleteAllBtn').style.display='inline-block';document.getElementById('deleteBroadcastBtn').style.display='inline-block';document.getElementById('userManagement').style.display='block';document.getElementById('adminStatus').textContent='✅ Verified!';document.getElementById('adminStatus').style.color='#34c759';showS('✅ Admin ON','success');renderUT();renderR();dispM();setUser('aish')}else{document.getElementById('adminStatus').textContent='❌ Wrong password!';document.getElementById('adminStatus').style.color='#ff3b30';i.value=''}}
 
-    function toggleEncrypt() {
-        const box = document.getElementById('encryptBox');
-        box.classList.toggle('show');
-        if (box.classList.contains('show')) {
-            document.getElementById('encryptKeyInput').focus();
-            if (keyHint) {
-                const hintDisplay = document.getElementById('keyHintDisplay');
-                hintDisplay.innerHTML = '💡 <strong>Hint:</strong> ' + keyHint;
-                hintDisplay.style.display = 'block';
-            } else {
-                document.getElementById('keyHintDisplay').style.display = 'none';
-            }
-        }
-    }
+function refreshUserList(){if(!adm)return;renderUT();showS('🔄 Refreshed!','success')}
 
-    // ========== 📢 BROADCAST ==========
-    function toggleBroadcast() {
-        if (!isAdmin) { showStatus('❌ Admin login required!', 'error'); return; }
-        const box = document.getElementById('broadcastBox');
-        box.classList.toggle('show');
-        if (box.classList.contains('show')) {
-            document.getElementById('broadcastInput').focus();
-            document.getElementById('broadcastStatus').textContent = '';
-        }
-    }
+async function deleteUser(u){if(!adm){showS('❌ Admin login!','error');return}if(u==='aish'){showS('❌ Cannot delete admin!','error');return}if(!confirm('Delete @'+u+' and all their messages?'))return;if(sav)return;sav=!0;showS('⏳ Deleting @'+u+'...','loading');try{usrs=usrs.filter(x=>x!==u);msgs=msgs.filter(m=>m.user!==u&&!m.isSystem&&!m.isRequest);await saveU();await saveR();if(cur===u)setUser('aish');renderU();renderUT();await dispM();showS('🗑️ @'+u+' deleted!','success')}catch(e){showS('❌ Delete failed: '+e.message,'error')}finally{sav=!1}}
 
-    async function sendBroadcast() {
-        if (!isAdmin) { showStatus('❌ Admin login required!', 'error'); return; }
-        if (!isKeySet()) { showStatus('❌ Set encryption key first!', 'error'); return; }
-        const input = document.getElementById('broadcastInput');
-        const text = input.value.trim();
-        if (!text) {
-            document.getElementById('broadcastStatus').textContent = '❌ Please enter a message!';
-            document.getElementById('broadcastStatus').style.color = '#ff3b30';
-            return;
-        }
-        if (isSaving) return;
+function renderUT(){const c=document.getElementById('userListTags');if(!adm){c.innerHTML='';return}if(usrs.length===0){c.innerHTML='<span style="color:#555;font-size:11px">No users</span>';return}c.innerHTML=usrs.map(u=>{if(u==='aish')return'<span class="user-tag" style="border-color:#ff3b30">👑 @aish</span>';return'<span class="user-tag">@'+u+' <button class="remove-btn" onclick="deleteUser(\''+u+'\')" title="Delete user">✕</button></span>'}).join('')}
 
-        const enc = await encryptMessage(text);
-        const broadcastMsg = {
-            id: 'broadcast_' + Date.now(),
-            user: 'aish',
-            text: enc.encrypted,
-            iv: enc.iv,
-            encrypted: true,
-            isBroadcast: true,
-            timestamp: new Date().toISOString()
-        };
+async function toggleRequest(){if(!isKey()){showS('❌ Set key first!','error');return}const b=document.getElementById('requestBox');b.classList.toggle('show');if(b.classList.contains('show')){if(!uid)uid=await getU();document.getElementById('requestIdDisplay').textContent='🆔 Your ID: '+uid;document.getElementById('requestName').focus();renderR()}}
+async function sendRequest(){if(!isKey()){showS('❌ Set key first!','error');return}const i=document.getElementById('requestName'),n=i.value.trim().toLowerCase();if(!n)return document.getElementById('requestStatus').textContent='❌ Enter username!';if(n==='aish')return document.getElementById('requestStatus').textContent='❌ "aish" reserved!';if(usrs.includes(n))return document.getElementById('requestStatus').textContent='❌ User exists!';if(!uid)uid=await getU();if(reqs.some(r=>r.uniqueId===uid))return document.getElementById('requestStatus').textContent='⏳ You already have a pending request!';if(localStorage.getItem('chat_request_sent')==='true')return document.getElementById('requestStatus').textContent='⏳ You already sent a request!';if(usrs.length>=MAXU+1)return document.getElementById('requestStatus').textContent='❌ Chat full! Only '+MAXU+' users allowed.';const nr={id:'req_'+Date.now(),name:n,uniqueId:uid,timestamp:new Date().toISOString(),status:'pending'};reqs.push(nr);localStorage.setItem('chat_request_sent','true');await saveR();i.value='';document.getElementById('requestStatus').textContent='✅ Request sent!';document.getElementById('requestStatus').style.color='#34c759';document.getElementById('requestBadge').style.display='inline-block';renderR()}
+async function approveRequest(id){if(!adm)return showS('❌ Admin login!','error');const r=reqs.find(x=>x.id===id);if(!r)return;if(usrs.length>=MAXU+1){showS('❌ Max '+MAXU+' users!','error');return}usrs.push(r.name);reqs=reqs.filter(x=>x.id!==id);chatEn=!0;await saveR();await saveU();renderU();renderUT();renderR();showS('✅ @'+r.name+' added!','success');document.getElementById('requestBadge').style.display=reqs.length>0?'inline-block':'none';if(uid===r.uniqueId){chatEn=!0;document.getElementById('chatInput').disabled=!1;document.getElementById('chatInput').placeholder='Message as @'+r.name+'...'}}
+async function rejectRequest(id){if(!adm)return showS('❌ Admin login!','error');reqs=reqs.filter(x=>x.id!==id);await saveR();renderR();document.getElementById('requestBadge').style.display=reqs.length>0?'inline-block':'none';showS('🗑️ Request rejected','info')}
 
-        isSaving = true;
-        document.getElementById('broadcastStatus').textContent = '⏳ Sending broadcast...';
-        document.getElementById('broadcastStatus').style.color = '#fffc00';
+function renderU(){const s=document.getElementById('userSelector'),did=localStorage.getItem('admin_device_id'),mid=localStorage.getItem('chat_user_id')||'',isAd=(did==='aish_master'||mid===did),ks=isKey();s.innerHTML=usrs.map(u=>{const ia=u==='aish',ac=u===cur?'active':'',lk=ia&&!isAd?'admin-locked':'',dis=!ks?'disabled':'',clk=(!ks||(ia&&!isAd))?'':`onclick="setUser('${u}')"`;return'<button class="user-btn '+(ia?'admin-user ':'')+ac+' '+lk+' '+dis+'" data-user="'+u+'" '+clk+' '+(lk||dis?'disabled':'')+'>'+(ia?'👑 ':'')+'@'+u+(lk?' 🔒':'')+(!ks?' 🔑':'')+'</button>'}).join('')}
 
-        try {
-            const updated = messages.filter(m => !m.isSystem && !m.isRequest);
-            const sm = messages.find(m => m.isSystem);
-            if (sm) updated.push(sm);
-            const rm = messages.find(m => m.isRequest);
-            if (rm) updated.push(rm);
-            updated.push(broadcastMsg);
-            
-            const r = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messages: updated })
-            });
-            if (!r.ok) throw new Error('Failed to send broadcast');
-            messages = updated;
-            input.value = '';
-            document.getElementById('broadcastStatus').textContent = '✅ Broadcast sent!';
-            document.getElementById('broadcastStatus').style.color = '#34c759';
-            document.getElementById('broadcastBox').classList.remove('show');
-            await displayMessages();
-            showStatus('📢 Broadcast sent!', 'success');
-        } catch (error) {
-            document.getElementById('broadcastStatus').textContent = '❌ Failed: ' + error.message;
-            document.getElementById('broadcastStatus').style.color = '#ff3b30';
-        } finally { isSaving = false; }
-    }
+async function saveU(){try{const u=msgs.filter(m=>!m.isSystem),ns={id:'sys_'+Date.now(),user:'system',text:JSON.stringify({users:usrs,chatEnabled:chatEn}),timestamp:new Date().toISOString(),isSystem:!0};u.push(ns);const r=await fetch(`https://api.jsonbin.io/v3/b/${BIN}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:u})});if(!r.ok)throw new Error('Save failed');msgs=u}catch(e){}}
+async function saveR(){try{const u=msgs.filter(m=>!m.isRequest&&!m.isSystem),nr={id:'reqs_'+Date.now(),user:'system',text:JSON.stringify({requests:reqs}),timestamp:new Date().toISOString(),isRequest:!0};u.push(nr);const sm=msgs.find(m=>m.isSystem);if(sm)u.push(sm);const r=await fetch(`https://api.jsonbin.io/v3/b/${BIN}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:u})});if(!r.ok)throw new Error('Save reqs failed');msgs=u}catch(e){}}
+async function fetchM(){if(!isKey()){disableF();return}try{const r=await fetch(`https://api.jsonbin.io/v3/b/${BIN}/latest`);if(!r.ok)throw new Error('Fetch failed');const d=await r.json();msgs=d.record.messages||[];const sm=msgs.find(m=>m.isSystem);if(sm){try{const sv=JSON.parse(sm.text);if(sv.users)usrs=sv.users;if(sv.chatEnabled!==undefined)chatEn=sv.chatEnabled}catch(e){}}const rm=msgs.find(m=>m.isRequest);if(rm){try{const sv=JSON.parse(rm.text);if(sv.requests)reqs=sv.requests}catch(e){}}document.getElementById('requestBadge').style.display=reqs.length>0?'inline-block':'none';if(cur!=='aish'&&usrs.includes(cur)){chatEn=!0;document.getElementById('chatInput').disabled=!1}else if(cur!=='aish'&&!usrs.includes(cur)){chatEn=!1;document.getElementById('chatInput').disabled=!0;document.getElementById('chatInput').placeholder='⏳ Wait for admin...'}await dispM();renderU();renderUT();if(adm)renderR();updateS(!0)}catch(e){updateS(!1)}}
+async function sendMessage(){if(!isKey()){showS('❌ Set key first!','error');return}if(cur!=='aish'&&!chatEn)return showS('⏳ Wait for admin!','error');const i=document.getElementById('chatInput'),t=i.value.trim();if(!t)return showS('Please type something!','error');if(sav)return;const e=await enc(t),nm={id:Date.now().toString(),user:cur,text:e.encrypted,iv:e.iv,encrypted:!0,timestamp:new Date().toISOString()};sav=!0;showS('⏳ Sending...','loading');try{const u=msgs.filter(m=>!m.isSystem&&!m.isRequest&&!m.isBroadcast),sm=msgs.find(m=>m.isSystem);if(sm)u.push(sm);const rm=msgs.find(m=>m.isRequest);if(rm)u.push(rm);u.push(nm);const r=await fetch(`https://api.jsonbin.io/v3/b/${BIN}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:u})});if(!r.ok)throw new Error('Send failed');msgs=u;i.value='';await dispM();showS('✅ Sent!','success')}catch(e){showS('❌ '+e.message,'error')}finally{sav=!1}}
+async function deleteMessage(id){if(!adm)return showS('❌ Admin login!','error');if(!confirm('Delete this message?'))return;if(sav)return;sav=!0;showS('⏳ Deleting...','loading');try{const u=msgs.filter(m=>m.id!==id),r=await fetch(`https://api.jsonbin.io/v3/b/${BIN}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:u})});if(!r.ok)throw new Error('Delete failed');msgs=u;await dispM();showS('🗑️ Deleted!','success')}catch(e){showS('❌ '+e.message,'error')}finally{sav=!1}}
+async function editMessage(id,newText){if(!newText||!newText.trim())return;if(sav)return;const msg=msgs.find(m=>m.id===id);if(!msg||msg.user!==cur)return showS('❌ Cannot edit!','error');sav=!0;showS('⏳ Editing...','loading');try{const e=await enc(newText.trim());msg.text=e.encrypted;msg.iv=e.iv;msg.encrypted=!0;const u=msgs.filter(m=>!m.isSystem&&!m.isRequest&&!m.isBroadcast),sm=msgs.find(m=>m.isSystem);if(sm)u.push(sm);const rm=msgs.find(m=>m.isRequest);if(rm)u.push(rm);msgs.filter(m=>m.isBroadcast).forEach(m=>u.push(m));const r=await fetch(`https://api.jsonbin.io/v3/b/${BIN}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:u})});if(!r.ok)throw new Error('Edit failed');await dispM();showS('✏️ Message edited!','success')}catch(e){showS('❌ '+e.message,'error')}finally{sav=!1}}
+function renderR(){const c=document.getElementById('pendingRequests');if(!adm){c.innerHTML='<p style="color:#555;font-size:11px">🔐 Admin login to manage.</p>';return}if(reqs.length===0){c.innerHTML='<p style="color:#555;font-size:11px">✅ No pending requests.</p>';return}c.innerHTML=reqs.map(r=>'<div class="request-item"><div><span class="name">@'+r.name+'</span><span class="id">🆔 '+r.uniqueId+'</span><span class="time">'+new Date(r.timestamp).toLocaleString()+'</span></div><div class="actions"><button class="btn btn-success" style="padding:3px 8px;font-size:10px;border-radius:14px" onclick="approveRequest(\''+r.id+'\')">✅</button><button class="btn btn-danger" style="padding:3px 8px;font-size:10px;border-radius:14px" onclick="rejectRequest(\''+r.id+'\')">❌</button></div></div>').join('')}
+async function deleteAllMessages(){if(!adm)return showS('❌ Admin login!','error');const c=msgs.filter(m=>!m.isSystem&&!m.isRequest&&!m.isBroadcast).length;if(c===0)return showS('💬 No messages!','info');if(!confirm('Delete all '+c+' messages?'))return;if(sav)return;sav=!0;showS('⏳ Deleting...','loading');try{const km=msgs.filter(m=>m.isSystem||m.isRequest||m.isBroadcast),r=await fetch(`https://api.jsonbin.io/v3/b/${BIN}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:km})});if(!r.ok)throw new Error('Delete all failed');msgs=km;await dispM();showS('🗑️ '+c+' deleted!','success')}catch(e){showS('❌ '+e.message,'error')}finally{sav=!1}}
+function toggleAdmin(){const b=document.getElementById('passwordBox');if(adm){adm=!1;b.classList.remove('show');document.getElementById('deleteAllBtn').style.display='none';document.getElementById('deleteBroadcastBtn').style.display='none';document.getElementById('userManagement').style.display='none';document.getElementById('adminStatus').textContent='';showS('🔐 Admin OFF','info');dispM()}else{b.classList.toggle('show');if(b.classList.contains('show')){document.getElementById('adminPassword').focus();document.getElementById('adminStatus').textContent=''}}}
 
-    async function deleteAllBroadcasts() {
-        if (!isAdmin) return showStatus('❌ Admin login required!', 'error');
-        const bCount = messages.filter(m => m.isBroadcast).length;
-        if (bCount === 0) return showStatus('💬 No broadcasts to delete!', 'info');
-        if (!confirm(`Delete all ${bCount} broadcasts?`)) return;
-        if (isSaving) return;
-        isSaving = true;
-        showStatus('⏳ Deleting broadcasts...', 'loading');
-        try {
-            const updated = messages.filter(m => !m.isBroadcast);
-            const r = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messages: updated })
-            });
-            if (!r.ok) throw new Error('Failed to delete');
-            messages = updated;
-            await displayMessages();
-            showStatus(`🗑️ ${bCount} broadcasts deleted!`, 'success');
-        } catch (error) {
-            showStatus('❌ Delete failed: ' + error.message, 'error');
-        } finally { isSaving = false; }
-    }
-
-    // ========== 🔐 ADMIN LOCK ==========
-    const ADMIN_DEVICE_ID = localStorage.getItem('admin_device_id') || 'aish_master';
-    if (!localStorage.getItem('admin_device_id')) {
-        localStorage.setItem('admin_device_id', 'aish_master');
-    }
-
-    // ========== 👤 SET USER WITH LOCK ==========
-    function setUser(u) {
-        if (!isKeySet()) { showStatus('❌ Set encryption key first! (🔑)', 'error'); return; }
-        if (u === 'aish') {
-            const deviceId = localStorage.getItem('admin_device_id');
-            const myId = localStorage.getItem('chat_user_id') || '';
-            if (deviceId !== 'aish_master' && myId !== deviceId) {
-                showStatus('❌ Admin access restricted!', 'error');
-                return;
-            }
-        }
-        if (!users.includes(u)) { showStatus('❌ User not found!', 'error'); return; }
-        currentUser = u;
-        document.querySelectorAll('.user-btn').forEach(b => {
-            b.classList.toggle('active', b.dataset.user === u);
-        });
-        document.getElementById('chatInput').placeholder = u === 'aish' ? 'Message as @aish...' : `Message as @${u}...`;
-        if (u !== 'aish' && !chatEnabled) {
-            document.getElementById('chatInput').disabled = true;
-            document.getElementById('chatInput').placeholder = '⏳ Wait for admin approval...';
-        } else {
-            document.getElementById('chatInput').disabled = false;
-        }
-    }
-
-    // ========== 🔐 ADMIN VERIFY ==========
-    function verifyAdmin() {
-        const i = document.getElementById('adminPassword');
-        if (i.value.trim() === ADMIN_PASSWORD) {
-            isAdmin = true;
-            localStorage.setItem('admin_device_id', 'aish_master');
-            document.getElementById('passwordBox').classList.remove('show');
-            document.getElementById('deleteAllBtn').style.display = 'inline-block';
-            document.getElementById('deleteBroadcastBtn').style.display = 'inline-block';
-            document.getElementById('userManagement').style.display = 'block';
-            document.getElementById('adminStatus').textContent = '✅ Admin verified!';
-            document.getElementById('adminStatus').style.color = '#34c759';
-            showStatus('✅ Admin mode ON', 'success');
-            renderUserTags();
-            renderRequests();
-            displayMessages();
-            setUser('aish');
-        } else {
-            document.getElementById('adminStatus').textContent = '❌ Wrong password!';
-            document.getElementById('adminStatus').style.color = '#ff3b30';
-            i.value = '';
-        }
-    }
-
-    // ========== 🔄 REFRESH USER LIST ==========
-    function refreshUserList() {
-        if (!isAdmin) return;
-        renderUserTags();
-        showStatus('🔄 User list refreshed!', 'success');
-    }
-
-    // ========== 👥 USER MANAGEMENT - DELETE USER (FIXED) ==========
-    async function deleteUser(userToDelete) {
-        if (!isAdmin) { showStatus('❌ Admin login required!', 'error'); return; }
-        if (userToDelete === 'aish') { showStatus('❌ Cannot delete admin!', 'error'); return; }
-        if (!confirm(`Delete user @${userToDelete} and all their messages?\n\nThis will also delete all messages sent by this user.`)) return;
-        if (isSaving) return;
-        isSaving = true;
-        showStatus(`⏳ Deleting @${userToDelete}...`, 'loading');
-        try {
-            // 1. Remove user from users list
-            users = users.filter(u => u !== userToDelete);
-            
-            // 2. Delete all messages from this user (including broadcasts from this user)
-            messages = messages.filter(m => m.user !== userToDelete && !m.isSystem && !m.isRequest);
-            
-            // 3. Save updated data
-            await saveUsers();
-            await saveRequests();
-            
-            // 4. If current user was deleted, switch to aish
-            if (currentUser === userToDelete) {
-                setUser('aish');
-            }
-            
-            // 5. Update UI
-            renderUsers();
-            renderUserTags();
-            await displayMessages();
-            showStatus(`🗑️ @${userToDelete} deleted successfully!`, 'success');
-        } catch (error) {
-            showStatus('❌ Delete failed: ' + error.message, 'error');
-        } finally { isSaving = false; }
-    }
-
-    function renderUserTags() {
-        const container = document.getElementById('userListTags');
-        if (!isAdmin) { container.innerHTML = ''; return; }
-        if (users.length === 0) {
-            container.innerHTML = '<span style="color:#555;font-size:11px;">No users</span>';
-            return;
-        }
-        container.innerHTML = users.map(u => {
-            if (u === 'aish') {
-                return `<span class="user-tag" style="border-color:#ff3b30;">👑 @aish</span>`;
-            }
-            return `<span class="user-tag">@${u} <button class="remove-btn" onclick="deleteUser('${u}')" title="Delete user and their messages">✕</button></span>`;
-        }).join('');
-    }
-
-    // ========== 📩 REQUEST ==========
-    async function toggleRequest(){if(!isKeySet()){showStatus('❌ Set key first!','error');return}const b=document.getElementById('requestBox');b.classList.toggle('show');if(b.classList.contains('show')){if(!myUniqueId)myUniqueId=await getUniqueId();document.getElementById('requestIdDisplay').textContent='🆔 Your ID: '+myUniqueId;document.getElementById('requestName').focus();renderRequests()}}
-    
-    async function sendRequest(){if(!isKeySet()){showStatus('❌ Set key first!','error');return}const i=document.getElementById('requestName'),n=i.value.trim().toLowerCase();if(!n)return document.getElementById('requestStatus').textContent='❌ Please enter a username!';if(n==='aish')return document.getElementById('requestStatus').textContent='❌ "aish" is reserved!';if(users.includes(n))return document.getElementById('requestStatus').textContent='❌ User already exists!';if(!myUniqueId)myUniqueId=await getUniqueId();if(pendingRequests.some(r=>r.uniqueId===myUniqueId))return document.getElementById('requestStatus').textContent='⏳ You already have a pending request!';if(localStorage.getItem('chat_request_sent')==='true')return document.getElementById('requestStatus').textContent='⏳ You already sent a request!';if(users.length>=MAX_USERS+1)return document.getElementById('requestStatus').textContent='❌ Chat is full! Only '+MAX_USERS+' other users allowed.';const nr={id:'req_'+Date.now(),name:n,uniqueId:myUniqueId,timestamp:new Date().toISOString(),status:'pending'};pendingRequests.push(nr);localStorage.setItem('chat_request_sent','true');await saveRequests();i.value='';document.getElementById('requestStatus').textContent='✅ Request sent! Waiting for admin approval.';document.getElementById('requestStatus').style.color='#34c759';document.getElementById('requestBadge').style.display='inline-block';renderRequests()}
-    
-    async function approveRequest(id){if(!isAdmin)return showStatus('❌ Admin login required!','error');const r=pendingRequests.find(r=>r.id===id);if(!r)return;if(users.length>=MAX_USERS+1){showStatus(`❌ Max ${MAX_USERS} other users allowed!`,'error');return}users.push(r.name);pendingRequests=pendingRequests.filter(r=>r.id!==id);chatEnabled=true;await saveRequests();await saveUsers();renderUsers();renderUserTags();renderRequests();showStatus(`✅ @${r.name} added!`,'success');document.getElementById('requestBadge').style.display=pendingRequests.length>0?'inline-block':'none';if(myUniqueId===r.uniqueId){chatEnabled=true;document.getElementById('chatInput').disabled=false;document.getElementById('chatInput').placeholder=`Message as @${r.name}...`}}
-    
-    async function rejectRequest(id){if(!isAdmin)return showStatus('❌ Admin login required!','error');pendingRequests=pendingRequests.filter(r=>r.id!==id);await saveRequests();renderRequests();document.getElementById('requestBadge').style.display=pendingRequests.length>0?'inline-block':'none';showStatus('🗑️ Request rejected','info')}
-
-    // ========== 👥 RENDER USERS ==========
-    function renderUsers() {
-        const s = document.getElementById('userSelector');
-        const deviceId = localStorage.getItem('admin_device_id');
-        const myId = localStorage.getItem('chat_user_id') || '';
-        const isAdminDevice = (deviceId === 'aish_master' || myId === deviceId);
-        const keySet = isKeySet();
-        s.innerHTML = users.map(u => {
-            const ia = u === 'aish';
-            const ac = u === currentUser ? 'active' : '';
-            const locked = ia && !isAdminDevice ? 'admin-locked' : '';
-            const disabled = !keySet ? 'disabled' : '';
-            const clickHandler = (!keySet || (ia && !isAdminDevice)) ? '' : `onclick="setUser('${u}')"`;
-            return `<button class="user-btn ${ia?'admin-user':''} ${ac} ${locked} ${disabled}" data-user="${u}" ${clickHandler} ${(locked || disabled) ? 'disabled' : ''}>${ia?'👑 ':''}@${u}${locked ? ' 🔒' : ''}${!keySet ? ' 🔑' : ''}</button>`;
-        }).join('');
-    }
-
-    // ========== 🔄 OTHER FUNCTIONS ==========
-    async function encryptMessage(t){if(!encryptionKey)return{encrypted:t,iv:null};try{const e=new TextEncoder(),k=await crypto.subtle.importKey('raw',e.encode(encryptionKey.padEnd(32,' ').slice(0,32)),{name:'AES-GCM'},false,['encrypt','decrypt']),iv=crypto.getRandomValues(new Uint8Array(12)),enc=await crypto.subtle.encrypt({name:'AES-GCM',iv:iv},k,e.encode(t)),ea=new Uint8Array(enc),iva=new Uint8Array(iv);return{encrypted:btoa(String.fromCharCode(...ea)),iv:btoa(String.fromCharCode(...iva))}}catch(e){return{encrypted:t,iv:null}}}
-    async function decryptMessage(e,i){if(!encryptionKey||!i)return e;try{const en=new TextEncoder(),k=await crypto.subtle.importKey('raw',en.encode(encryptionKey.padEnd(32,' ').slice(0,32)),{name:'AES-GCM'},false,['encrypt','decrypt']),eb=Uint8Array.from(atob(e),c=>c.charCodeAt(0)),ib=Uint8Array.from(atob(i),c=>c.charCodeAt(0)),d=await crypto.subtle.decrypt({name:'AES-GCM',iv:ib},k,eb);return new TextDecoder().decode(d)}catch(e){return'🔒 [Encrypted - wrong key?]'}}
-    async function getUniqueId(){let s=localStorage.getItem('chat_user_id');if(s)return s;try{const r=await fetch('https://api.ipify.org?format=json'),d=await r.json(),ip=d.ip||'unknown',fp=navigator.userAgent+navigator.language+screen.width+screen.height,h=await sha256(ip+fp),uid=h.substring(0,16);localStorage.setItem('chat_user_id',uid);return uid}catch{const fid='user_'+Date.now().toString(36)+Math.random().toString(36).substring(2,6);localStorage.setItem('chat_user_id',fid);return fid}}
-    async function sha256(m){const b=new TextEncoder().encode(m),h=await crypto.subtle.digest('SHA-256',b),a=Array.from(new Uint8Array(h));return a.map(b=>b.toString(16).padStart(2,'0')).join('')}
-    function toggleAdmin(){const b=document.getElementById('passwordBox');if(isAdmin){isAdmin=false;b.classList.remove('show');document.getElementById('deleteAllBtn').style.display='none';document.getElementById('deleteBroadcastBtn').style.display='none';document.getElementById('userManagement').style.display='none';document.getElementById('adminStatus').textContent='';showStatus('🔐 Admin mode OFF','info');displayMessages()}else{b.classList.toggle('show');if(b.classList.contains('show')){document.getElementById('adminPassword').focus();document.getElementById('adminStatus').textContent=''}}}
-    async function deleteAllMessages(){if(!isAdmin)return showStatus('❌ Admin login required!','error');const c=messages.filter(m=>!m.isSystem&&!m.isRequest&&!m.isBroadcast).length;if(c===0)return showStatus('💬 No messages to delete!','info');if(!confirm(`Delete all ${c} messages?`))return;if(isSaving)return;isSaving=true;showStatus('⏳ Deleting all...','loading');try{const km=messages.filter(m=>m.isSystem||m.isRequest||m.isBroadcast),r=await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:km})});if(!r.ok)throw new Error('Failed to delete all');messages=km;await displayMessages();showStatus(`🗑️ ${c} messages deleted!`,'success')}catch(error){showStatus('❌ Delete all failed: '+error.message,'error')}finally{isSaving=false}}
-    function renderRequests(){const c=document.getElementById('pendingRequests');if(!isAdmin){c.innerHTML='<p style="color:#555;font-size:11px;">🔐 Admin login to manage requests.</p>';return}if(pendingRequests.length===0){c.innerHTML='<p style="color:#555;font-size:11px;">✅ No pending requests.</p>';return}c.innerHTML=pendingRequests.map(r=>`<div class="request-item"><div><span class="name">@${r.name}</span><span class="id">🆔 ${r.uniqueId}</span><span class="time">${new Date(r.timestamp).toLocaleString()}</span></div><div class="actions"><button class="btn btn-success" style="padding:3px 8px;font-size:10px;border-radius:14px;" onclick="approveRequest('${r.id}')">✅</button><button class="btn btn-danger" style="padding:3px 8px;font-size:10px;border-radius:14px;" onclick="rejectRequest('${r.id}')">❌</button></div></div>`).join('')}
-    async function saveUsers(){try{const u=messages.filter(m=>!m.isSystem),ns={id:'system_users_'+Date.now(),user:'system',text:JSON.stringify({users:users,chatEnabled:chatEnabled}),timestamp:new Date().toISOString(),isSystem:true};u.push(ns);const r=await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:u})});if(!r.ok)throw new Error('Failed to save');messages=u}catch(e){}}
-    async function saveRequests(){try{const u=messages.filter(m=>!m.isRequest&&!m.isSystem),nr={id:'requests_'+Date.now(),user:'system',text:JSON.stringify({requests:pendingRequests}),timestamp:new Date().toISOString(),isRequest:true};u.push(nr);const sm=messages.find(m=>m.isSystem);if(sm)u.push(sm);const r=await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:u})});if(!r.ok)throw new Error('Failed to save requests');messages=u}catch(e){}}
-    async function fetchMessages(){if(!isKeySet()){disableFeatures();return}try{const r=await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`);if(!r.ok)throw new Error('Failed to fetch');const d=await r.json();messages=d.record.messages||[];const sm=messages.find(m=>m.isSystem);if(sm){try{const sv=JSON.parse(sm.text);if(sv.users)users=sv.users;if(sv.chatEnabled!==undefined)chatEnabled=sv.chatEnabled}catch(e){}}const rm=messages.find(m=>m.isRequest);if(rm){try{const sv=JSON.parse(rm.text);if(sv.requests)pendingRequests=sv.requests}catch(e){}}document.getElementById('requestBadge').style.display=pendingRequests.length>0?'inline-block':'none';if(currentUser!=='aish'&&users.includes(currentUser)){chatEnabled=true;document.getElementById('chatInput').disabled=false}else if(currentUser!=='aish'&&!users.includes(currentUser)){chatEnabled=false;document.getElementById('chatInput').disabled=true;document.getElementById('chatInput').placeholder='⏳ Wait for admin approval...'}await displayMessages();renderUsers();renderUserTags();if(isAdmin)renderRequests();updateStatus(true)}catch(e){updateStatus(false)}}
-    async function sendMessage(){if(!isKeySet()){showStatus('❌ Set key first!','error');return}if(currentUser!=='aish'&&!chatEnabled)return showStatus('⏳ Wait for admin approval!','error');const i=document.getElementById('chatInput'),t=i.value.trim();if(!t)return showStatus('Please type something!','error');if(isSaving)return;const enc=await encryptMessage(t),nm={id:Date.now().toString(),user:currentUser,text:enc.encrypted,iv:enc.iv,encrypted:true,timestamp:new Date().toISOString()};isSaving=true;showStatus('⏳ Sending...','loading');try{const u=messages.filter(m=>!m.isSystem&&!m.isRequest&&!m.isBroadcast),sm=messages.find(m=>m.isSystem);if(sm)u.push(sm);const rm=messages.find(m=>m.isRequest);if(rm)u.push(rm);u.push(nm);const r=await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:u})});if(!r.ok)throw new Error('Failed to send');messages=u;i.value='';await displayMessages();showStatus('✅ Message sent!','success')}catch(e){showStatus('❌ Error: '+e.message,'error')}finally{isSaving=false}}
-    async function deleteMessage(id){if(!isAdmin)return showStatus('❌ Admin login required!','error');if(!confirm('Delete this message?'))return;if(isSaving)return;isSaving=true;showStatus('⏳ Deleting...','loading');try{const u=messages.filter(m=>m.id!==id),r=await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:u})});if(!r.ok)throw new Error('Failed to delete');messages=u;await displayMessages();showStatus('🗑️ Message deleted!','success')}catch(e){showStatus('❌ Delete failed: '+e.message,'error')}finally{isSaving=false}}
-    
-    async function displayMessages(){if(!isKeySet()){disableFeatures();return}const b=document.getElementById('chatBox');const dm=messages.filter(m=>!m.isSystem&&!m.isRequest);if(dm.length===0){b.innerHTML='<div class="msg system">💬 No messages yet. Start chatting!</div>';return}let html='';for(const m of dm){const ia=m.user==='aish';const isBroadcast=m.isBroadcast||false;const t=new Date(m.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});let userClass='user1';let senderName=ia?'👑 @aish':`@${m.user}`;let extraBadge='';if(isBroadcast){userClass='notification';senderName='📢 Broadcast';extraBadge='<span class="notification-badge">📢</span>';}else if(ia){userClass='aish';senderName='👑 @aish';extraBadge='<span class="admin-badge">Admin</span>';}let dt=m.text,ie=false;if(m.encrypted&&m.iv){ie=true;dt=await decryptMessage(m.text,m.iv)}const il=dt.startsWith('http://')||dt.startsWith('https://');const ft=il?`<a href="${dt}" target="_blank">${dt}</a>`:dt;const eb=ie?'<span class="e2ee-badge">🔒</span>':'';const copyBtn=isBroadcast?`<button class="copy-btn" onclick="copyText('${dt.replace(/'/g, "\\'")}')">📋</button>`:'';const deleteBtn=(isAdmin && !isBroadcast)?`<button class="delete-btn" onclick="deleteMessage('${m.id}')">✕</button>`:'';html+=`<div class="msg ${userClass}"><div class="sender">${senderName} ${extraBadge}</div><div class="text-content">${ft} ${eb}</div><div class="time-row">${t} ${copyBtn} ${deleteBtn}</div></div>`}b.innerHTML=html;b.scrollTop=b.scrollHeight;document.getElementById('msgCount').textContent=dm.filter(m=>!m.isBroadcast).length+' msgs'+(dm.filter(m=>m.isBroadcast).length>0?` 📢${dm.filter(m=>m.isBroadcast).length}`:'')}
-    
-    function copyText(text){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(()=>showStatus('✅ Copied!','success')).catch(()=>fallbackCopy(text))}else{fallbackCopy(text)}}
-    function fallbackCopy(text){const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.left='-9999px';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');showStatus('✅ Copied!','success')}catch(e){showStatus('❌ Copy failed','error')}document.body.removeChild(ta)}
-    
-    function showStatus(t,type){const e=document.getElementById('statusText');e.textContent=t;e.style.color=type==='success'?'#34c759':type==='error'?'#ff3b30':type==='loading'?'#fffc00':'#888';if(type!=='loading')setTimeout(()=>{e.textContent='Connected';e.style.color='#888'},4000)}
-    function updateStatus(o){document.getElementById('statusDot').className='status-dot '+(o?'online':'offline');document.getElementById('statusText').textContent=o?'Connected':'Disconnected'}
-
-    async function init(){myUniqueId=await getUniqueId();if(encryptionKey){document.getElementById('encryptBox').classList.remove('show');if(keyHint){const hd=document.getElementById('keyHintDisplay');hd.innerHTML='💡 <strong>Hint:</strong> '+keyHint;hd.style.display='block'}enableFeatures();fetchMessages()}else{document.getElementById('encryptBox').classList.add('show');disableFeatures()}setInterval(fetchMessages,5000);if(currentUser!=='aish'){document.getElementById('chatInput').disabled=true;document.getElementById('chatInput').placeholder='⏳ Wait for admin approval...'}}
-    document.getElementById('chatInput').addEventListener('keydown',e=>{if(e.key==='Enter')sendMessage()});
-    init();
+async function dispM(){if(!isKey()){disableF();return}const b=document.getElementById('chatBox'),dm=msgs.filter(m=>!m.isSystem&&!m.isRequest);if(dm.length===0){b.innerHTML='<div class="msg system">💬 No messages yet.</div>';return}let html='';for(const m of dm){const ia=m.user==='aish',isB=m.isBroadcast||!1,t=new Date(m.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});let uc='user1',sn=ia?'👑 @aish':'@'+m.user,eb2='';if(isB){uc='notification';sn='📢 Broadcast';eb2='<span class="notification-badge">📢</span>'}else if(ia){uc='aish';sn='👑 @aish';eb2='<span class="admin-badge">Admin</span>'}let dt=m.text,ie=!1;if(m.encrypted&&m.iv){ie=!0;dt=await dec(m.text,m.iv)}const il=dt.startsWith('http://')||dt.startsWith('https://'),ft=il?'<a href="'+dt+'" target="_blank">'+dt+'</a>':dt,ebe=ie?'<span class="e2ee-badge">🔒</span>':'';let copyB='',editB='',delB='';if(isB)copyB='<button class="copy-btn" onclick="copyText(\''+dt.replace(/'/g,"\\'")+'\')">📋</button>';if(!isB&&m.user===cur){editB='<button class="action-btn" onclick="editMsg(\''+m.id+'\')">✏️</button>'}if(adm&&!isB)delB='<button class="action-btn" onclick="deleteMessage(\''+m.id+'\')">🗑️</button>';html+='<div class="msg '+uc+'"><div class="sender">'+sn+' '+eb2+'</div><div class="text-content">'+ft+' '+ebe+'</div><div class="time-row">'+t+' '+copyB+' '+editB+' '+delB+'</div></div>'}b.innerHTML=html;b.scrollTop=b.scrollHeight;const mc=dm.filter(m=>!m.isBroadcast).length;document.getElementById('msgCount').textContent=mc+' msgs'+(dm.filter(m=>m.isBroadcast).length>0?' 📢'+dm.filter(m=>m.isBroadcast).length:'')}
+function editMsg(id){const msg=msgs.find(m=>m.id===id);if(!msg||msg.user!==cur)return showS('❌ Cannot edit!','error');const newText=prompt('Edit message:',msg.text);if(newText!==null)editMessage(id,newText)}
+function copyText(t){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(()=>showS('✅ Copied!','success')).catch(()=>fallbackCopy(t))}else fallbackCopy(t)}
+function fallbackCopy(t){const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.left='-9999px';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');showS('✅ Copied!','success')}catch(e){showS('❌ Copy failed','error')}document.body.removeChild(ta)}
+function showS(t,type){const e=document.getElementById('statusText');e.textContent=t;e.style.color=type==='success'?'#34c759':type==='error'?'#ff3b30':type==='loading'?'#fffc00':'#888';if(type!=='loading')setTimeout(()=>{e.textContent='Connected';e.style.color='#888'},4000)}
+function updateS(o){document.getElementById('statusDot').className='status-dot '+(o?'online':'offline');document.getElementById('statusText').textContent=o?'Connected':'Disconnected'}
+async function getU(){let s=localStorage.getItem('chat_user_id');if(s)return s;try{const r=await fetch('https://api.ipify.org?format=json'),d=await r.json(),ip=d.ip||'unknown',fp=navigator.userAgent+navigator.language+screen.width+screen.height,h=await sha(ip+fp),uid=h.substring(0,16);localStorage.setItem('chat_user_id',uid);return uid}catch{const fid='user_'+Date.now().toString(36)+Math.random().toString(36).substring(2,6);localStorage.setItem('chat_user_id',fid);return fid}}
+async function sha(m){const b=new TextEncoder().encode(m),h=await crypto.subtle.digest('SHA-256',b),a=Array.from(new Uint8Array(h));return a.map(b=>b.toString(16).padStart(2,'0')).join('')}
+async function init(){uid=await getU();if(key){document.getElementById('encryptBox').classList.remove('show');if(hint){const hd=document.getElementById('keyHintDisplay');hd.innerHTML='💡 <strong>Hint:</strong> '+hint;hd.style.display='block'}enableF();fetchM()}else{document.getElementById('encryptBox').classList.add('show');disableF()}setInterval(fetchM,5000);if(cur!=='aish'){document.getElementById('chatInput').disabled=!0;document.getElementById('chatInput').placeholder='⏳ Wait for admin...'}}
+document.getElementById('chatInput').addEventListener('keydown',e=>{if(e.key==='Enter')sendMessage()});
+init();
 </script>
 </body>
 </html>
