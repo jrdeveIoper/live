@@ -205,6 +205,7 @@
             border-left: 3px solid #ffc107;
         }
         .request-item .name { font-weight: bold; color: #fff; }
+        .request-item .id { font-size: 10px; color: #666; margin-left: 8px; }
         .request-item .time { font-size: 11px; color: #888; }
         .request-item .actions { display: flex; gap: 6px; }
         .notification-dot {
@@ -267,6 +268,7 @@
             <button class="btn btn-primary" onclick="sendRequest()">📤 Send Request</button>
         </div>
         <div id="requestStatus" style="margin-top:8px; font-size:13px; color:#888;"></div>
+        <div id="requestIdDisplay" style="margin-top:4px; font-size:11px; color:#555;"></div>
     </div>
 
     <!-- Add User Box (Admin Only) -->
@@ -322,6 +324,45 @@
     const MAX_USERS = 4;
     
     // ============================================================
+    // 🚀 UNIQUE ID SYSTEM
+    // ============================================================
+
+    // Generate a unique ID based on IP + fingerprint
+    async function getUniqueId() {
+        // Try to get from localStorage first
+        let storedId = localStorage.getItem('chat_user_id');
+        if (storedId) return storedId;
+        
+        try {
+            // Get IP
+            const ipRes = await fetch('https://api.ipify.org?format=json');
+            const ipData = await ipRes.json();
+            const ip = ipData.ip || 'unknown';
+            
+            // Create fingerprint
+            const fingerprint = navigator.userAgent + navigator.language + screen.width + screen.height;
+            const hash = await sha256(ip + fingerprint);
+            const uniqueId = hash.substring(0, 16);
+            
+            localStorage.setItem('chat_user_id', uniqueId);
+            return uniqueId;
+        } catch (error) {
+            // Fallback: generate random ID
+            const fallbackId = 'user_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+            localStorage.setItem('chat_user_id', fallbackId);
+            return fallbackId;
+        }
+    }
+
+    // Simple SHA-256 hash function
+    async function sha256(message) {
+        const msgBuffer = new TextEncoder().encode(message);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // ============================================================
     // 🚀 CHAT SYSTEM
     // ============================================================
 
@@ -331,6 +372,7 @@
     let isSaving = false;
     let users = ['aish'];
     let pendingRequests = [];
+    let myUniqueId = '';
 
     // ========== 👤 SET USER ==========
     function setUser(user) {
@@ -380,10 +422,15 @@
     }
 
     // ========== 📩 REQUEST SYSTEM ==========
-    function toggleRequest() {
+    async function toggleRequest() {
         const box = document.getElementById('requestBox');
         box.style.display = box.style.display === 'none' ? 'block' : 'none';
-        if (box.style.display === 'block') document.getElementById('requestName').focus();
+        if (box.style.display === 'block') {
+            document.getElementById('requestName').focus();
+            // Show unique ID
+            if (!myUniqueId) myUniqueId = await getUniqueId();
+            document.getElementById('requestIdDisplay').textContent = '🆔 Your ID: ' + myUniqueId;
+        }
     }
 
     async function sendRequest() {
@@ -392,25 +439,36 @@
         if (!name) return document.getElementById('requestStatus').textContent = '❌ Please enter a username!';
         if (name === 'aish') return document.getElementById('requestStatus').textContent = '❌ "aish" is reserved!';
         if (users.includes(name)) return document.getElementById('requestStatus').textContent = '❌ User already exists!';
-        if (pendingRequests.some(r => r.name === name)) return document.getElementById('requestStatus').textContent = '⏳ Request already sent!';
+        
+        // Get unique ID
+        if (!myUniqueId) myUniqueId = await getUniqueId();
+        
+        // Check if this ID already has a pending request
+        if (pendingRequests.some(r => r.uniqueId === myUniqueId)) {
+            return document.getElementById('requestStatus').textContent = '⏳ You already have a pending request!';
+        }
+        
+        // Check if this ID already has a request in localStorage
+        if (localStorage.getItem('chat_request_sent') === 'true') {
+            return document.getElementById('requestStatus').textContent = '⏳ You already sent a request! Wait for admin approval.';
+        }
         
         const newRequest = {
             id: 'req_' + Date.now(),
             name: name,
+            uniqueId: myUniqueId,
             timestamp: new Date().toISOString(),
             status: 'pending'
         };
         
         pendingRequests.push(newRequest);
+        localStorage.setItem('chat_request_sent', 'true');
         await saveRequests();
         input.value = '';
         document.getElementById('requestStatus').textContent = '✅ Request sent! Waiting for admin approval.';
         document.getElementById('requestStatus').style.color = '#28a745';
         
-        // Show badge on request button
         document.getElementById('requestBadge').style.display = 'inline-block';
-        
-        // If admin is logged in, show immediately
         if (isAdmin) renderRequests();
     }
 
@@ -429,7 +487,7 @@
         await saveUsers();
         renderUsers();
         renderRequests();
-        showStatus(`✅ @${request.name} added!`, 'success');
+        showStatus(`✅ @${request.name} added! (ID: ${request.uniqueId})`, 'success');
         document.getElementById('requestBadge').style.display = pendingRequests.length > 0 ? 'inline-block' : 'none';
     }
 
@@ -456,6 +514,7 @@
             <div class="request-item">
                 <div>
                     <span class="name">@${r.name}</span>
+                    <span class="id">🆔 ${r.uniqueId}</span>
                     <span class="time">${new Date(r.timestamp).toLocaleString()}</span>
                 </div>
                 <div class="actions">
@@ -553,7 +612,6 @@
                 isRequest: true
             };
             updated.push(newReq);
-            // Also keep system message
             const sysMsg = messages.find(m => m.isSystem);
             if (sysMsg) updated.push(sysMsg);
             
@@ -578,7 +636,6 @@
             const data = await res.json();
             messages = data.record.messages || [];
             
-            // Load users
             const sysMsg = messages.find(m => m.isSystem);
             if (sysMsg) {
                 try {
@@ -587,7 +644,6 @@
                 } catch (e) {}
             }
             
-            // Load requests
             const reqMsg = messages.find(m => m.isRequest);
             if (reqMsg) {
                 try {
@@ -596,7 +652,6 @@
                 } catch (e) {}
             }
             
-            // Show badge if pending requests
             document.getElementById('requestBadge').style.display = pendingRequests.length > 0 ? 'inline-block' : 'none';
             
             displayMessages();
@@ -629,7 +684,6 @@
 
         try {
             const updated = messages.filter(m => !m.isSystem && !m.isRequest);
-            // Add system messages back
             const sysMsg = messages.find(m => m.isSystem);
             if (sysMsg) updated.push(sysMsg);
             const reqMsg = messages.find(m => m.isRequest);
@@ -743,12 +797,18 @@
     }
 
     // ========== 🚀 INIT ==========
-    fetchMessages();
-    setInterval(fetchMessages, 5000);
+    async function init() {
+        myUniqueId = await getUniqueId();
+        console.log('🆔 Your Unique ID:', myUniqueId);
+        fetchMessages();
+        setInterval(fetchMessages, 5000);
+    }
 
     document.getElementById('chatInput').addEventListener('keydown', (e) => {
         if (e.key === 'Enter') sendMessage();
     });
+
+    init();
 </script>
 
 </body>
