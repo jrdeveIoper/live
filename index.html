@@ -73,7 +73,7 @@
             touch-action: manipulation;
         }
         .input-group button:active { background: #218838; }
-        .link-item { 
+        .item-card { 
             background: #fff; 
             padding: 12px 15px; 
             margin: 10px 0; 
@@ -85,14 +85,16 @@
             flex-wrap: wrap; 
             gap: 10px; 
         }
-        .link-item a { 
-            color: #007bff; 
-            text-decoration: none; 
-            word-break: break-all; 
+        .item-card .content { 
             flex: 1; 
+            word-break: break-all; 
             font-size: 14px;
         }
-        .link-item a:hover { text-decoration: underline; }
+        .item-card .content a { 
+            color: #007bff; 
+            text-decoration: none; 
+        }
+        .item-card .content a:hover { text-decoration: underline; }
         .copy-btn { 
             background: #007bff; 
             color: white; 
@@ -144,10 +146,46 @@
         }
         .status-dot.online { background: #28a745; }
         .status-dot.offline { background: #dc3545; }
+        .badge {
+            display: inline-block;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            color: white;
+            background: #6c757d;
+        }
+        .badge.link { background: #007bff; }
+        .badge.text { background: #6c757d; }
+        .password-box {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ffc107;
+            margin: 10px 0;
+        }
+        .password-box input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+        .password-box button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            touch-action: manipulation;
+        }
+        .password-box button:active { background: #0056b3; }
         @media (max-width: 500px) { 
             .input-group button { width: 100%; } 
-            .link-item { flex-direction: column; align-items: stretch; }
-            .link-item div { display: flex; gap: 5px; }
+            .item-card { flex-direction: column; align-items: stretch; }
+            .item-card div { display: flex; gap: 5px; }
             .copy-btn, .delete-btn { flex: 1; text-align: center; }
         }
     </style>
@@ -165,40 +203,74 @@
     
     <!-- Admin Panel -->
     <div class="admin-panel" id="adminPanel">
-        <h3 style="margin-bottom: 10px;">➕ Add New Link</h3>
+        <h3 style="margin-bottom: 10px;">➕ Add New Item</h3>
         <p style="color: #6c757d; font-size: 14px; margin-bottom: 15px;">
-            ⚡ Link daalo aur <strong>Save</strong> dabao - apne aap save ho jayega!
+            ⚡ Link ya message daalo - auto save ho jayega!
         </p>
         
-        <div class="input-group">
-            <input type="url" id="linkInput" placeholder="https://example.com/your-link" />
-            <button onclick="addLink()">💾 Save Link</button>
+        <!-- 🔐 Password Box -->
+        <div class="password-box" id="passwordBox">
+            <strong>🔐 Admin Password</strong>
+            <p style="font-size: 13px; margin: 5px 0;">Delete karne ke liye password daalo!</p>
+            <input type="password" id="adminPassword" placeholder="Enter admin password" />
+            <button onclick="verifyPassword()">✅ Verify Password</button>
+            <p style="font-size: 12px; color: #856404; margin-top: 5px;">💡 Default password: <strong>admin123</strong></p>
         </div>
-        <div id="message" class="message"></div>
+        
+        <div id="adminContent" style="display: none;">
+            <div class="input-group">
+                <input type="text" id="linkInput" placeholder="https://example.com या कोई भी message" />
+                <button onclick="addItem()">💾 Save</button>
+            </div>
+            <div id="message" class="message"></div>
+            <p style="font-size: 12px; color: #6c757d; margin-top: 10px;">
+                🗑️ Delete button ab active hai! (Password verify karne ke baad)
+            </p>
+        </div>
     </div>
 
-    <!-- Links Display -->
+    <!-- Items Display -->
     <div id="linksContainer">
-        <p class="empty-msg">⏳ Loading links...</p>
+        <p class="empty-msg">⏳ Loading...</p>
     </div>
 </div>
 
 <script>
     // ============================================================
-    // ✅ PERMANENT BIN ID - AUTO PASTE (Account se banaya)
+    // ✅ PERMANENT BIN ID
     // ============================================================
-    const BIN_ID = '6a9e8273ac6210605aaef916'; // ✅ Permanent - Kabhi expire nahi hoga
+    const BIN_ID = '6a9e8273ac6210605aaef916';
+    
+    // 🔐 ADMIN PASSWORD (Yahan apna password daalo)
+    const ADMIN_PASSWORD = 'admin123'; // ⬅️ Isko change kar lo
     
     // ============================================================
-    // 🚀 NEEYCHE KUCH NAHI BADALNA - SAB AUTO HAI!
+    // 🚀 NEEYCHE KUCH NAHI BADALNA
     // ============================================================
 
-    let currentLinks = [];
+    let currentItems = [];
     let isSaving = false;
+    let isAdmin = false;
 
-    // ========== 📥 FETCH LINKS FROM JSONBIN ==========
-    async function fetchLinks() {
-        showMessage('⏳ Loading links...', 'loading');
+    // ========== 🔐 PASSWORD VERIFY ==========
+    function verifyPassword() {
+        const input = document.getElementById('adminPassword');
+        const password = input.value.trim();
+        
+        if (password === ADMIN_PASSWORD) {
+            isAdmin = true;
+            document.getElementById('passwordBox').style.display = 'none';
+            document.getElementById('adminContent').style.display = 'block';
+            showMessage('✅ Admin verified! Now you can delete items.', 'success');
+        } else {
+            showMessage('❌ Wrong password! Try again.', 'error');
+            input.value = '';
+        }
+    }
+
+    // ========== 📥 FETCH ITEMS ==========
+    async function fetchItems() {
+        showMessage('⏳ Loading...', 'loading');
         
         try {
             const url = `https://api.jsonbin.io/v3/b/${BIN_ID}/latest`;
@@ -206,23 +278,22 @@
             
             if (!response.ok) {
                 if (response.status === 404) {
-                    showMessage('❌ Bin not found! Check your Bin ID.', 'error');
+                    showMessage('❌ Bin not found!', 'error');
                     return;
                 }
                 throw new Error(`HTTP ${response.status}`);
             }
             
             const data = await response.json();
-            currentLinks = data.record.links || [];
+            currentItems = data.record.links || [];
             
-            // Sirf valid URLs filter karein
-            currentLinks = currentLinks.filter(link => 
-                link && typeof link === 'string' && link.startsWith('http')
+            currentItems = currentItems.filter(item => 
+                item && typeof item === 'string' && item.trim() !== ''
             );
                 
-            displayLinks();
+            displayItems();
             updateStatus(true);
-            showMessage(`✅ ${currentLinks.length} links loaded`, 'success');
+            showMessage(`✅ ${currentItems.length} items loaded`, 'success');
             
         } catch (error) {
             console.error('Fetch error:', error);
@@ -231,55 +302,46 @@
         }
     }
 
-    // ========== 💾 SAVE LINK TO JSONBIN ==========
-    async function addLink() {
+    // ========== 💾 SAVE ITEM ==========
+    async function addItem() {
         if (isSaving) return;
         
         const input = document.getElementById('linkInput');
-        const newLink = input.value.trim();
+        const newItem = input.value.trim();
         
-        if (!newLink) {
-            showMessage('Please enter a URL', 'error');
+        if (!newItem) {
+            showMessage('Please enter something!', 'error');
             return;
         }
         
-        try {
-            new URL(newLink);
-        } catch {
-            showMessage('❌ Invalid URL. Use https://...', 'error');
-            return;
-        }
-        
-        if (currentLinks.includes(newLink)) {
+        if (currentItems.includes(newItem)) {
             showMessage('⚠️ Already exists!', 'error');
             return;
         }
         
         isSaving = true;
-        showMessage('⏳ Saving to JSONBin...', 'loading');
+        showMessage('⏳ Saving...', 'loading');
         
         try {
-            // Naya links array banayein
-            const updatedLinks = [...currentLinks, newLink];
+            const updatedItems = [...currentItems, newItem];
             
-            // JSONBin update karein (bina token ke)
             const updateUrl = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
             const updateResponse = await fetch(updateUrl, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ links: updatedLinks })
+                body: JSON.stringify({ links: updatedItems })
             });
             
             if (!updateResponse.ok) {
                 throw new Error('Failed to update bin');
             }
             
-            currentLinks = updatedLinks;
-            displayLinks();
+            currentItems = updatedItems;
+            displayItems();
             input.value = '';
-            showMessage('✅ Link saved! Visible on all devices.', 'success');
+            showMessage('✅ Saved! Visible on all devices.', 'success');
             
         } catch (error) {
             showMessage('❌ Failed: ' + error.message, 'error');
@@ -288,16 +350,22 @@
         }
     }
 
-    // ========== 🗑️ DELETE LINK FROM JSONBIN ==========
-    async function deleteLink(linkToDelete) {
-        if (!confirm(`Delete: ${linkToDelete}?`)) return;
+    // ========== 🗑️ DELETE ITEM (Sirf Admin) ==========
+    async function deleteItem(itemToDelete) {
+        if (!isAdmin) {
+            showMessage('❌ Admin password verify karo pehle!', 'error');
+            document.getElementById('passwordBox').style.display = 'block';
+            return;
+        }
+        
+        if (!confirm(`Delete: ${itemToDelete}?`)) return;
         
         if (isSaving) return;
         isSaving = true;
         showMessage('⏳ Deleting...', 'loading');
         
         try {
-            const updatedLinks = currentLinks.filter(link => link !== linkToDelete);
+            const updatedItems = currentItems.filter(item => item !== itemToDelete);
             
             const updateUrl = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
             const updateResponse = await fetch(updateUrl, {
@@ -305,16 +373,16 @@
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ links: updatedLinks })
+                body: JSON.stringify({ links: updatedItems })
             });
             
             if (!updateResponse.ok) {
                 throw new Error('Failed to update bin');
             }
             
-            currentLinks = updatedLinks;
-            displayLinks();
-            showMessage('🗑️ Link deleted!', 'success');
+            currentItems = updatedItems;
+            displayItems();
+            showMessage('🗑️ Item deleted!', 'success');
             
         } catch (error) {
             showMessage('❌ Delete failed: ' + error.message, 'error');
@@ -323,22 +391,22 @@
         }
     }
 
-    // ========== 📋 COPY LINK ==========
-    function copyLink(link) {
+    // ========== 📋 COPY ITEM ==========
+    function copyItem(item) {
         if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(link).then(() => {
-                showMessage('✅ Copied: ' + link, 'success');
+            navigator.clipboard.writeText(item).then(() => {
+                showMessage('✅ Copied: ' + item, 'success');
             }).catch(() => {
-                fallbackCopy(link);
+                fallbackCopy(item);
             });
         } else {
-            fallbackCopy(link);
+            fallbackCopy(item);
         }
     }
 
-    function fallbackCopy(link) {
+    function fallbackCopy(item) {
         const textarea = document.createElement('textarea');
-        textarea.value = link;
+        textarea.value = item;
         textarea.style.position = 'fixed';
         textarea.style.left = '-9999px';
         document.body.appendChild(textarea);
@@ -352,24 +420,32 @@
         document.body.removeChild(textarea);
     }
 
-    // ========== 🖥️ DISPLAY LINKS ==========
-    function displayLinks() {
+    // ========== 🖥️ DISPLAY ITEMS ==========
+    function displayItems() {
         const container = document.getElementById('linksContainer');
         
-        if (!currentLinks || currentLinks.length === 0) {
-            container.innerHTML = '<p class="empty-msg">📭 No links yet. Click "Admin" to add.</p>';
+        if (!currentItems || currentItems.length === 0) {
+            container.innerHTML = '<p class="empty-msg">📭 No items yet. Click "Admin" to add.</p>';
             return;
         }
         
-        container.innerHTML = currentLinks.map(link => `
-            <div class="link-item">
-                <a href="${link}" target="_blank" rel="noopener">${link}</a>
-                <div>
-                    <button class="copy-btn" onclick="copyLink('${link}')">📋 Copy</button>
-                    <button class="delete-btn" onclick="deleteLink('${link}')">🗑️</button>
+        container.innerHTML = currentItems.map(item => {
+            // Check if item is a URL
+            const isUrl = item.startsWith('http://') || item.startsWith('https://');
+            
+            return `
+                <div class="item-card">
+                    <div class="content">
+                        ${isUrl ? `<a href="${item}" target="_blank" rel="noopener">${item}</a>` : item}
+                        ${isUrl ? '<span class="badge link">Link</span>' : '<span class="badge text">Text</span>'}
+                    </div>
+                    <div>
+                        <button class="copy-btn" onclick="copyItem('${item.replace(/'/g, "\\'")}')">📋 Copy</button>
+                        ${isAdmin ? `<button class="delete-btn" onclick="deleteItem('${item.replace(/'/g, "\\'")}')">🗑️</button>` : ''}
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     }
 
     // ========== 💬 SHOW MESSAGE ==========
@@ -397,12 +473,17 @@
         panel.classList.toggle('show');
         if (panel.classList.contains('show')) {
             document.getElementById('linkInput').focus();
+            // Reset admin state when reopening
+            isAdmin = false;
+            document.getElementById('passwordBox').style.display = 'block';
+            document.getElementById('adminContent').style.display = 'none';
+            document.getElementById('adminPassword').value = '';
         }
     }
 
     // ========== 🚀 INIT ==========
-    fetchLinks();
-    setInterval(fetchLinks, 15000);
+    fetchItems();
+    setInterval(fetchItems, 15000);
 </script>
 
 </body>
