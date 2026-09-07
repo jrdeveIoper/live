@@ -5,14 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SnapChat</title>
     <style>
-        /* --- FULLSCREEN CHAT --- */
+        /* --- FULLSCREEN CHAT (Same as before) --- */
         *{margin:0;padding:0;box-sizing:border-box}
         html,body{height:100%;width:100%;overflow:hidden}
         body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0a0a;color:#fff;display:flex;justify-content:center;align-items:center}
         .container{width:100%;height:100%;max-width:500px;background:#121212;display:flex;flex-direction:column;border:1px solid #2a2a2a;position:relative;overflow:hidden}
         @media(min-width:500px){.container{border-radius:24px;height:95vh}}
-
-        /* --- HEADER (Thin) --- */
         .header{padding:10px 16px;background:#1a1a1a;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #2a2a2a;flex-shrink:0;min-height:48px}
         .header h1{font-size:17px;font-weight:700;color:#fff;letter-spacing:-0.3px}
         .header h1 span{color:#fffc00}
@@ -23,22 +21,17 @@
         .header-controls .btn-warning:hover{background:#e6e600}
         .notification-dot{display:inline-block;width:8px;height:8px;background:#ff3b30;border-radius:50%;margin-left:4px;animation:pulse 1s infinite}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
-
-        /* --- USER SELECTOR (Thin) --- */
         .user-selector{display:flex;gap:5px;padding:6px 12px;background:#1a1a1a;border-bottom:1px solid #2a2a2a;flex-shrink:0;overflow-x:auto;flex-wrap:nowrap}
         .user-selector::-webkit-scrollbar{display:none}
         .user-btn{padding:4px 12px;border:none;border-radius:20px;font-size:12px;background:#2a2a2a;color:#888;cursor:pointer;transition:0.2s;white-space:nowrap}
         .user-btn.active{background:#007aff;color:#fff}
         .user-btn.admin-user{border:1px solid #ff3b30}
         .user-btn.admin-locked{opacity:0.5;cursor:not-allowed;border-color:#555}
-
-        /* --- CHAT BOX (FULL FLEX) --- */
+        .user-btn.disabled{opacity:0.3;cursor:not-allowed}
         .chat-box{flex:1;overflow-y:auto;padding:10px 14px;background:#121212;display:flex;flex-direction:column;gap:2px;min-height:0}
         .chat-box::-webkit-scrollbar{width:3px}
         .chat-box::-webkit-scrollbar-track{background:transparent}
         .chat-box::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:10px}
-
-        /* --- MESSAGES (Compact) --- */
         .msg{max-width:78%;padding:5px 12px;border-radius:18px;font-size:14px;line-height:1.4;word-break:break-word;animation:fadeIn .2s ease;margin-bottom:1px}
         @keyframes fadeIn{from{opacity:0;transform:scale(0.96)}to{opacity:1;transform:scale(1)}}
         .msg.aish{background:#007aff;color:#fff;align-self:flex-start;border-bottom-left-radius:4px}
@@ -52,23 +45,18 @@
         .msg .time-row .delete-btn{background:rgba(255,255,255,0.15);border:none;color:#fff;padding:0 5px;border-radius:10px;font-size:8px;cursor:pointer;transition:.2s}
         .msg .time-row .delete-btn:hover{background:rgba(255,50,50,0.4)}
         .msg .e2ee-badge{font-size:7px;opacity:.3;margin-left:4px}
-
-        /* --- STATUS BAR (Thin) --- */
         .status-bar{display:flex;justify-content:space-between;padding:3px 14px;background:#0f0f0f;font-size:10px;color:#555;border-bottom:1px solid #1a1a1a;flex-shrink:0;min-height:22px}
         .status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px}
         .status-dot.online{background:#34c759}
         .status-dot.offline{background:#ff3b30}
-
-        /* --- INPUT AREA (Fixed Bottom) --- */
         .input-area{padding:8px 12px 12px;background:#1a1a1a;border-top:1px solid #2a2a2a;display:flex;gap:8px;flex-shrink:0;min-height:52px}
         .input-area input{flex:1;padding:8px 14px;background:#2a2a2a;border:none;border-radius:24px;color:#fff;font-size:15px;outline:none;transition:.2s}
         .input-area input::placeholder{color:#666}
         .input-area input:focus{background:#333}
+        .input-area input:disabled{opacity:0.3;cursor:not-allowed}
         .input-area button{padding:8px 16px;background:#007aff;border:none;border-radius:24px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:.2s;white-space:nowrap}
         .input-area button:active{transform:scale(.95)}
-        .input-area button:disabled{opacity:.4;pointer-events:none}
-
-        /* --- POPUPS --- */
+        .input-area button:disabled{opacity:0.3;pointer-events:none;cursor:not-allowed}
         .popup-box{display:none;background:#1a1a1a;padding:12px 14px;border-bottom:1px solid #2a2a2a;flex-shrink:0}
         .popup-box.show{display:block}
         .popup-box strong{color:#fff;font-size:13px}
@@ -81,17 +69,23 @@
         .popup-box .btn-danger{background:#ff3b30;color:#fff}
         .popup-box .btn-secondary{background:#2a2a2a;color:#aaa}
         .popup-box .btn-warning{background:#fffc00;color:#000}
+        .popup-box .btn-outline{background:transparent;border:1px solid #555;color:#aaa}
+        .key-hint{font-size:11px;color:#666;margin-top:4px;padding:6px 10px;background:#1a1a1a;border-radius:12px;border:1px dashed #333}
+        .key-hint strong{color:#fffc00}
+        .key-required-banner{background:#2a1a1a;border:1px solid #ff3b30;color:#ff6b6b;padding:20px;text-align:center;border-radius:16px;margin:20px 0}
+        .key-required-banner strong{color:#fffc00;font-size:18px}
         .request-item{display:flex;justify-content:space-between;align-items:center;background:#2a2a2a;padding:6px 10px;border-radius:16px;margin-bottom:4px}
         .request-item .name{font-weight:600;color:#fff;font-size:12px}
         .request-item .id{font-size:9px;color:#666;margin-left:6px}
         .request-item .time{font-size:9px;color:#555}
         .request-item .actions{display:flex;gap:4px}
-
-        /* --- CONTACT (Minimal) --- */
         .contact-section{padding:5px 12px;background:#0f0f0f;border-top:1px solid #1a1a1a;text-align:center;font-size:10px;color:#555;flex-shrink:0;min-height:28px}
         .contact-section a{color:#007aff;text-decoration:none;margin:0 5px}
         .contact-section a:hover{text-decoration:underline}
-
+        .locked-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:100;padding:20px}
+        .locked-overlay .lock-icon{font-size:48px;margin-bottom:16px}
+        .locked-overlay h2{color:#fff;font-size:20px;margin-bottom:8px}
+        .locked-overlay p{color:#888;font-size:14px;text-align:center;max-width:300px}
         @media(max-width:500px){.container{height:100%;border-radius:0}.msg{max-width:85%;font-size:13px}.input-area input{font-size:14px}}
     </style>
 </head>
@@ -108,14 +102,23 @@
         </div>
     </div>
 
-    <!-- POPUPS -->
+    <!-- ENCRYPT BOX -->
     <div class="popup-box" id="encryptBox">
         <strong>🔑 Encryption Key</strong>
         <p>Set a secret key to encrypt messages. <strong>Don't forget it!</strong></p>
         <input type="password" id="encryptKeyInput" placeholder="Enter encryption key..." />
-        <button class="btn btn-primary" onclick="setEncryptionKey()">🔐 Set Key</button>
+        <input type="text" id="encryptHintInput" placeholder="Hint (e.g., My pet's name)" style="margin-top:4px;" />
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
+            <button class="btn btn-primary" onclick="setEncryptionKey()">🔐 Set Key</button>
+            <button class="btn btn-outline" onclick="exportKey()">💾 Export</button>
+            <button class="btn btn-outline" onclick="document.getElementById('importKeyInput').click()">📂 Import</button>
+            <input type="file" id="importKeyInput" accept=".json" style="display:none;" onchange="importKey(event)" />
+        </div>
         <div id="encryptStatus" style="margin-top:4px;font-size:11px;color:#888;"></div>
+        <div id="keyHintDisplay" class="key-hint" style="display:none;"></div>
     </div>
+
+    <!-- ADMIN PANEL -->
     <div class="popup-box" id="passwordBox">
         <strong>🔐 Admin Panel</strong>
         <p>Default: <strong>admin123</strong></p>
@@ -126,6 +129,8 @@
         </div>
         <div id="adminStatus" style="margin-top:4px;font-size:11px;color:#888;"></div>
     </div>
+
+    <!-- REQUEST BOX -->
     <div class="popup-box" id="requestBox">
         <strong>📩 Join Request</strong>
         <p>Enter a username to request joining the chat.</p>
@@ -149,7 +154,7 @@
         <span id="msgCount">0 messages</span>
     </div>
 
-    <!-- CHAT BOX (FULL) -->
+    <!-- CHAT BOX -->
     <div class="chat-box" id="chatBox">
         <div class="msg system">💬 No messages yet. Start chatting!</div>
     </div>
@@ -160,7 +165,7 @@
         <button onclick="sendMessage()">Send</button>
     </div>
 
-    <!-- CONTACT (Minimal) -->
+    <!-- CONTACT -->
     <div class="contact-section">
         <a href="https://facebook.com/yadavaiswary" target="_blank">📘</a>
         <a href="https://instagram.com/yadavaiswary" target="_blank">📷</a>
@@ -190,10 +195,170 @@
     })();
 
     // ============================================================
-    // 🔥 CHAT SYSTEM + ADMIN LOCK
+    // 🔥 CHAT SYSTEM + KEY MANDATORY
     // ============================================================
     const BIN_ID='6a9e8273ac6210605aaef916',ADMIN_PASSWORD='admin123',MAX_USERS=1;
-    let messages=[],currentUser='aish',isAdmin=false,isSaving=false,users=['aish'],pendingRequests=[],myUniqueId='',chatEnabled=false,encryptionKey=localStorage.getItem('e2ee_key')||'';
+    let messages=[],currentUser='aish',isAdmin=false,isSaving=false,users=['aish'],pendingRequests=[],myUniqueId='',chatEnabled=false;
+    let encryptionKey = localStorage.getItem('e2ee_key') || '';
+    let keyHint = localStorage.getItem('e2ee_hint') || '';
+
+    // ========== 🔐 CHECK KEY STATUS ==========
+    function isKeySet() {
+        return encryptionKey && encryptionKey.length > 0;
+    }
+
+    // ========== 🔑 KEY MANAGEMENT ==========
+    function setEncryptionKey() {
+        const keyInput = document.getElementById('encryptKeyInput');
+        const hintInput = document.getElementById('encryptHintInput');
+        const key = keyInput.value.trim();
+        const hint = hintInput.value.trim();
+        
+        if (!key) {
+            document.getElementById('encryptStatus').textContent = '❌ Please enter a key!';
+            document.getElementById('encryptStatus').style.color = '#ff3b30';
+            return;
+        }
+        
+        encryptionKey = key;
+        localStorage.setItem('e2ee_key', key);
+        
+        if (hint) {
+            keyHint = hint;
+            localStorage.setItem('e2ee_hint', hint);
+        }
+        
+        document.getElementById('encryptStatus').textContent = '✅ Key set! ' + (hint ? 'Hint saved.' : '');
+        document.getElementById('encryptStatus').style.color = '#34c759';
+        document.getElementById('encryptBox').classList.remove('show');
+        
+        if (keyHint) {
+            const hintDisplay = document.getElementById('keyHintDisplay');
+            hintDisplay.innerHTML = '💡 <strong>Hint:</strong> ' + keyHint;
+            hintDisplay.style.display = 'block';
+        }
+        
+        keyInput.value = '';
+        hintInput.value = '';
+        
+        // ✅ Enable all features after key is set
+        enableFeatures();
+        fetchMessages();
+    }
+
+    function enableFeatures() {
+        // Enable user buttons
+        document.querySelectorAll('.user-btn').forEach(b => {
+            b.classList.remove('disabled');
+        });
+        // Enable input
+        document.getElementById('chatInput').disabled = false;
+        document.getElementById('chatInput').placeholder = 'Type a message...';
+        // Enable send button
+        document.querySelector('.input-area button').disabled = false;
+        // Update status
+        showStatus('🔓 Key active', 'success');
+        // Refresh messages
+        displayMessages();
+    }
+
+    function disableFeatures() {
+        // Disable user buttons
+        document.querySelectorAll('.user-btn').forEach(b => {
+            b.classList.add('disabled');
+        });
+        // Disable input
+        document.getElementById('chatInput').disabled = true;
+        document.getElementById('chatInput').placeholder = '🔒 Set encryption key first (🔑)';
+        // Disable send button
+        document.querySelector('.input-area button').disabled = true;
+        // Show lock message in chat
+        const box = document.getElementById('chatBox');
+        box.innerHTML = `
+            <div class="key-required-banner">
+                <div style="font-size:48px;margin-bottom:12px;">🔒</div>
+                <strong>Encryption Key Required</strong>
+                <p style="margin-top:8px;color:#aaa;font-size:14px;">Click <strong>🔑</strong> in header to set your encryption key.<br>Without it, you cannot view or send messages.</p>
+                ${keyHint ? `<p style="margin-top:12px;color:#fffc00;font-size:13px;">💡 Hint: ${keyHint}</p>` : ''}
+            </div>
+        `;
+        document.getElementById('msgCount').textContent = '🔒 Locked';
+    }
+
+    // ========== 💾 EXPORT KEY ==========
+    function exportKey() {
+        if (!encryptionKey) {
+            alert('❌ No key set to export!');
+            return;
+        }
+        const data = {
+            key: encryptionKey,
+            hint: keyHint || '',
+            exportedAt: new Date().toISOString()
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'chat_key_backup.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById('encryptStatus').textContent = '✅ Key exported!';
+        document.getElementById('encryptStatus').style.color = '#34c759';
+    }
+
+    // ========== 📂 IMPORT KEY ==========
+    function importKey(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (data.key) {
+                    encryptionKey = data.key;
+                    localStorage.setItem('e2ee_key', data.key);
+                    if (data.hint) {
+                        keyHint = data.hint;
+                        localStorage.setItem('e2ee_hint', data.hint);
+                    }
+                    document.getElementById('encryptStatus').textContent = '✅ Key imported!';
+                    document.getElementById('encryptStatus').style.color = '#34c759';
+                    document.getElementById('encryptBox').classList.remove('show');
+                    if (keyHint) {
+                        const hintDisplay = document.getElementById('keyHintDisplay');
+                        hintDisplay.innerHTML = '💡 <strong>Hint:</strong> ' + keyHint;
+                        hintDisplay.style.display = 'block';
+                    }
+                    enableFeatures();
+                    fetchMessages();
+                } else {
+                    document.getElementById('encryptStatus').textContent = '❌ Invalid backup file!';
+                    document.getElementById('encryptStatus').style.color = '#ff3b30';
+                }
+            } catch (err) {
+                document.getElementById('encryptStatus').textContent = '❌ Error reading file!';
+                document.getElementById('encryptStatus').style.color = '#ff3b30';
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
+    }
+
+    function toggleEncrypt() {
+        const box = document.getElementById('encryptBox');
+        box.classList.toggle('show');
+        if (box.classList.contains('show')) {
+            document.getElementById('encryptKeyInput').focus();
+            if (keyHint) {
+                const hintDisplay = document.getElementById('keyHintDisplay');
+                hintDisplay.innerHTML = '💡 <strong>Hint:</strong> ' + keyHint;
+                hintDisplay.style.display = 'block';
+            } else {
+                document.getElementById('keyHintDisplay').style.display = 'none';
+            }
+        }
+    }
 
     // ========== 🔐 ADMIN LOCK ==========
     const ADMIN_DEVICE_ID = localStorage.getItem('admin_device_id') || 'aish_master';
@@ -203,6 +368,10 @@
 
     // ========== 👤 SET USER WITH LOCK ==========
     function setUser(u) {
+        if (!isKeySet()) {
+            showStatus('❌ Please set encryption key first! (🔑)', 'error');
+            return;
+        }
         if (u === 'aish') {
             const deviceId = localStorage.getItem('admin_device_id');
             const myId = localStorage.getItem('chat_user_id') || '';
@@ -250,9 +419,9 @@
     }
 
     // ========== 📩 REQUEST ==========
-    async function toggleRequest(){const b=document.getElementById('requestBox');b.classList.toggle('show');if(b.classList.contains('show')){if(!myUniqueId)myUniqueId=await getUniqueId();document.getElementById('requestIdDisplay').textContent='🆔 Your ID: '+myUniqueId;document.getElementById('requestName').focus();renderRequests()}}
+    async function toggleRequest(){if(!isKeySet()){showStatus('❌ Set encryption key first!','error');return}const b=document.getElementById('requestBox');b.classList.toggle('show');if(b.classList.contains('show')){if(!myUniqueId)myUniqueId=await getUniqueId();document.getElementById('requestIdDisplay').textContent='🆔 Your ID: '+myUniqueId;document.getElementById('requestName').focus();renderRequests()}}
     
-    async function sendRequest(){const i=document.getElementById('requestName'),n=i.value.trim().toLowerCase();if(!n)return document.getElementById('requestStatus').textContent='❌ Please enter a username!';if(n==='aish')return document.getElementById('requestStatus').textContent='❌ "aish" is reserved for admin!';if(users.includes(n))return document.getElementById('requestStatus').textContent='❌ User already exists!';if(!myUniqueId)myUniqueId=await getUniqueId();if(pendingRequests.some(r=>r.uniqueId===myUniqueId))return document.getElementById('requestStatus').textContent='⏳ You already have a pending request!';if(localStorage.getItem('chat_request_sent')==='true')return document.getElementById('requestStatus').textContent='⏳ You already sent a request!';if(users.length>=MAX_USERS+1)return document.getElementById('requestStatus').textContent='❌ Chat is full! Only 1 other user allowed.';const nr={id:'req_'+Date.now(),name:n,uniqueId:myUniqueId,timestamp:new Date().toISOString(),status:'pending'};pendingRequests.push(nr);localStorage.setItem('chat_request_sent','true');await saveRequests();i.value='';document.getElementById('requestStatus').textContent='✅ Request sent! Waiting for admin approval.';document.getElementById('requestStatus').style.color='#34c759';document.getElementById('requestBadge').style.display='inline-block';renderRequests()}
+    async function sendRequest(){if(!isKeySet()){showStatus('❌ Set encryption key first!','error');return}const i=document.getElementById('requestName'),n=i.value.trim().toLowerCase();if(!n)return document.getElementById('requestStatus').textContent='❌ Please enter a username!';if(n==='aish')return document.getElementById('requestStatus').textContent='❌ "aish" is reserved for admin!';if(users.includes(n))return document.getElementById('requestStatus').textContent='❌ User already exists!';if(!myUniqueId)myUniqueId=await getUniqueId();if(pendingRequests.some(r=>r.uniqueId===myUniqueId))return document.getElementById('requestStatus').textContent='⏳ You already have a pending request!';if(localStorage.getItem('chat_request_sent')==='true')return document.getElementById('requestStatus').textContent='⏳ You already sent a request!';if(users.length>=MAX_USERS+1)return document.getElementById('requestStatus').textContent='❌ Chat is full! Only 1 other user allowed.';const nr={id:'req_'+Date.now(),name:n,uniqueId:myUniqueId,timestamp:new Date().toISOString(),status:'pending'};pendingRequests.push(nr);localStorage.setItem('chat_request_sent','true');await saveRequests();i.value='';document.getElementById('requestStatus').textContent='✅ Request sent! Waiting for admin approval.';document.getElementById('requestStatus').style.color='#34c759';document.getElementById('requestBadge').style.display='inline-block';renderRequests()}
     
     async function approveRequest(id){if(!isAdmin)return showStatus('❌ Admin login required!','error');const r=pendingRequests.find(r=>r.id===id);if(!r)return;if(users.length>=MAX_USERS+1){showStatus(`❌ Max ${MAX_USERS} other user allowed!`,'error');return}users.push(r.name);pendingRequests=pendingRequests.filter(r=>r.id!==id);chatEnabled=true;await saveRequests();await saveUsers();renderUsers();renderRequests();showStatus(`✅ @${r.name} added!`,'success');document.getElementById('requestBadge').style.display=pendingRequests.length>0?'inline-block':'none';if(myUniqueId===r.uniqueId){chatEnabled=true;document.getElementById('chatInput').disabled=false;document.getElementById('chatInput').placeholder=`Message as @${r.name}...`}}
     
@@ -264,18 +433,18 @@
         const deviceId = localStorage.getItem('admin_device_id');
         const myId = localStorage.getItem('chat_user_id') || '';
         const isAdminDevice = (deviceId === 'aish_master' || myId === deviceId);
+        const keySet = isKeySet();
         s.innerHTML = users.map(u => {
             const ia = u === 'aish';
             const ac = u === currentUser ? 'active' : '';
             const locked = ia && !isAdminDevice ? 'admin-locked' : '';
-            const clickHandler = ia && !isAdminDevice ? '' : `onclick="setUser('${u}')"`;
-            return `<button class="user-btn ${ia?'admin-user':''} ${ac} ${locked}" data-user="${u}" ${clickHandler} ${locked ? 'disabled' : ''}>${ia?'👑 ':''}@${u}${locked ? ' 🔒' : ''}</button>`;
+            const disabled = !keySet ? 'disabled' : '';
+            const clickHandler = (!keySet || (ia && !isAdminDevice)) ? '' : `onclick="setUser('${u}')"`;
+            return `<button class="user-btn ${ia?'admin-user':''} ${ac} ${locked} ${disabled}" data-user="${u}" ${clickHandler} ${(locked || disabled) ? 'disabled' : ''}>${ia?'👑 ':''}@${u}${locked ? ' 🔒' : ''}${!keySet ? ' 🔑' : ''}</button>`;
         }).join('');
     }
 
     // ========== 🔄 OTHER FUNCTIONS ==========
-    async function setEncryptionKey(){const i=document.getElementById('encryptKeyInput'),k=i.value.trim();if(!k)return document.getElementById('encryptStatus').textContent='❌ Please enter a key!';encryptionKey=k;localStorage.setItem('e2ee_key',k);document.getElementById('encryptStatus').textContent='✅ Key set!';document.getElementById('encryptStatus').style.color='#34c759';document.getElementById('encryptBox').classList.remove('show')}
-    function toggleEncrypt(){const b=document.getElementById('encryptBox');b.classList.toggle('show');if(b.classList.contains('show'))document.getElementById('encryptKeyInput').focus()}
     async function encryptMessage(t){if(!encryptionKey)return{encrypted:t,iv:null};try{const e=new TextEncoder(),k=await crypto.subtle.importKey('raw',e.encode(encryptionKey.padEnd(32,' ').slice(0,32)),{name:'AES-GCM'},false,['encrypt','decrypt']),iv=crypto.getRandomValues(new Uint8Array(12)),enc=await crypto.subtle.encrypt({name:'AES-GCM',iv:iv},k,e.encode(t)),ea=new Uint8Array(enc),iva=new Uint8Array(iv);return{encrypted:btoa(String.fromCharCode(...ea)),iv:btoa(String.fromCharCode(...iva))}}catch(e){return{encrypted:t,iv:null}}}
     async function decryptMessage(e,i){if(!encryptionKey||!i)return e;try{const en=new TextEncoder(),k=await crypto.subtle.importKey('raw',en.encode(encryptionKey.padEnd(32,' ').slice(0,32)),{name:'AES-GCM'},false,['encrypt','decrypt']),eb=Uint8Array.from(atob(e),c=>c.charCodeAt(0)),ib=Uint8Array.from(atob(i),c=>c.charCodeAt(0)),d=await crypto.subtle.decrypt({name:'AES-GCM',iv:ib},k,eb);return new TextDecoder().decode(d)}catch(e){return'🔒 [Encrypted - wrong key?]'}}
     async function getUniqueId(){let s=localStorage.getItem('chat_user_id');if(s)return s;try{const r=await fetch('https://api.ipify.org?format=json'),d=await r.json(),ip=d.ip||'unknown',fp=navigator.userAgent+navigator.language+screen.width+screen.height,h=await sha256(ip+fp),uid=h.substring(0,16);localStorage.setItem('chat_user_id',uid);return uid}catch{const fid='user_'+Date.now().toString(36)+Math.random().toString(36).substring(2,6);localStorage.setItem('chat_user_id',fid);return fid}}
@@ -285,14 +454,14 @@
     function renderRequests(){const c=document.getElementById('pendingRequests');if(!isAdmin){c.innerHTML='<p style="color:#555;font-size:11px;">🔐 Admin login to manage requests.</p>';return}if(pendingRequests.length===0){c.innerHTML='<p style="color:#555;font-size:11px;">✅ No pending requests.</p>';return}c.innerHTML=pendingRequests.map(r=>`<div class="request-item"><div><span class="name">@${r.name}</span><span class="id">🆔 ${r.uniqueId}</span><span class="time">${new Date(r.timestamp).toLocaleString()}</span></div><div class="actions"><button class="btn btn-success" style="padding:3px 8px;font-size:10px;border-radius:14px;" onclick="approveRequest('${r.id}')">✅</button><button class="btn btn-danger" style="padding:3px 8px;font-size:10px;border-radius:14px;" onclick="rejectRequest('${r.id}')">❌</button></div></div>`).join('')}
     async function saveUsers(){try{const u=messages.filter(m=>!m.isSystem),ns={id:'system_users_'+Date.now(),user:'system',text:JSON.stringify({users:users,chatEnabled:chatEnabled}),timestamp:new Date().toISOString(),isSystem:true};u.push(ns);const r=await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:u})});if(!r.ok)throw new Error('Failed to save');messages=u}catch(e){}}
     async function saveRequests(){try{const u=messages.filter(m=>!m.isRequest&&!m.isSystem),nr={id:'requests_'+Date.now(),user:'system',text:JSON.stringify({requests:pendingRequests}),timestamp:new Date().toISOString(),isRequest:true};u.push(nr);const sm=messages.find(m=>m.isSystem);if(sm)u.push(sm);const r=await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:u})});if(!r.ok)throw new Error('Failed to save requests');messages=u}catch(e){}}
-    async function fetchMessages(){try{const r=await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`);if(!r.ok)throw new Error('Failed to fetch');const d=await r.json();messages=d.record.messages||[];const sm=messages.find(m=>m.isSystem);if(sm){try{const sv=JSON.parse(sm.text);if(sv.users)users=sv.users;if(sv.chatEnabled!==undefined)chatEnabled=sv.chatEnabled}catch(e){}}const rm=messages.find(m=>m.isRequest);if(rm){try{const sv=JSON.parse(rm.text);if(sv.requests)pendingRequests=sv.requests}catch(e){}}document.getElementById('requestBadge').style.display=pendingRequests.length>0?'inline-block':'none';if(currentUser!=='aish'&&users.includes(currentUser)){chatEnabled=true;document.getElementById('chatInput').disabled=false}else if(currentUser!=='aish'&&!users.includes(currentUser)){chatEnabled=false;document.getElementById('chatInput').disabled=true;document.getElementById('chatInput').placeholder='⏳ Wait for admin approval...'}await displayMessages();renderUsers();if(isAdmin)renderRequests();updateStatus(true)}catch(e){updateStatus(false)}}
-    async function sendMessage(){if(currentUser!=='aish'&&!chatEnabled)return showStatus('⏳ Wait for admin approval to chat!','error');const i=document.getElementById('chatInput'),t=i.value.trim();if(!t)return showStatus('Please type something!','error');if(isSaving)return;if(!encryptionKey)return showStatus('❌ Please set encryption key first!','error');const enc=await encryptMessage(t),nm={id:Date.now().toString(),user:currentUser,text:enc.encrypted,iv:enc.iv,encrypted:true,timestamp:new Date().toISOString()};isSaving=true;showStatus('⏳ Sending...','loading');try{const u=messages.filter(m=>!m.isSystem&&!m.isRequest),sm=messages.find(m=>m.isSystem);if(sm)u.push(sm);const rm=messages.find(m=>m.isRequest);if(rm)u.push(rm);u.push(nm);const r=await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:u})});if(!r.ok)throw new Error('Failed to send');messages=u;i.value='';await displayMessages();showStatus('✅ Message sent (E2EE)!','success')}catch(e){showStatus('❌ Error: '+e.message,'error')}finally{isSaving=false}}
+    async function fetchMessages(){if(!isKeySet()){disableFeatures();return}try{const r=await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`);if(!r.ok)throw new Error('Failed to fetch');const d=await r.json();messages=d.record.messages||[];const sm=messages.find(m=>m.isSystem);if(sm){try{const sv=JSON.parse(sm.text);if(sv.users)users=sv.users;if(sv.chatEnabled!==undefined)chatEnabled=sv.chatEnabled}catch(e){}}const rm=messages.find(m=>m.isRequest);if(rm){try{const sv=JSON.parse(rm.text);if(sv.requests)pendingRequests=sv.requests}catch(e){}}document.getElementById('requestBadge').style.display=pendingRequests.length>0?'inline-block':'none';if(currentUser!=='aish'&&users.includes(currentUser)){chatEnabled=true;document.getElementById('chatInput').disabled=false}else if(currentUser!=='aish'&&!users.includes(currentUser)){chatEnabled=false;document.getElementById('chatInput').disabled=true;document.getElementById('chatInput').placeholder='⏳ Wait for admin approval...'}await displayMessages();renderUsers();if(isAdmin)renderRequests();updateStatus(true)}catch(e){updateStatus(false)}}
+    async function sendMessage(){if(!isKeySet()){showStatus('❌ Set encryption key first! (🔑)','error');return}if(currentUser!=='aish'&&!chatEnabled)return showStatus('⏳ Wait for admin approval to chat!','error');const i=document.getElementById('chatInput'),t=i.value.trim();if(!t)return showStatus('Please type something!','error');if(isSaving)return;const enc=await encryptMessage(t),nm={id:Date.now().toString(),user:currentUser,text:enc.encrypted,iv:enc.iv,encrypted:true,timestamp:new Date().toISOString()};isSaving=true;showStatus('⏳ Sending...','loading');try{const u=messages.filter(m=>!m.isSystem&&!m.isRequest),sm=messages.find(m=>m.isSystem);if(sm)u.push(sm);const rm=messages.find(m=>m.isRequest);if(rm)u.push(rm);u.push(nm);const r=await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:u})});if(!r.ok)throw new Error('Failed to send');messages=u;i.value='';await displayMessages();showStatus('✅ Message sent (E2EE)!','success')}catch(e){showStatus('❌ Error: '+e.message,'error')}finally{isSaving=false}}
     async function deleteMessage(id){if(!isAdmin)return showStatus('❌ Admin login required!','error');if(!confirm('Delete this message?'))return;if(isSaving)return;isSaving=true;showStatus('⏳ Deleting...','loading');try{const u=messages.filter(m=>m.id!==id),r=await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:u})});if(!r.ok)throw new Error('Failed to delete');messages=u;await displayMessages();showStatus('🗑️ Message deleted!','success')}catch(e){showStatus('❌ Delete failed: '+e.message,'error')}finally{isSaving=false}}
-    async function displayMessages(){const b=document.getElementById('chatBox'),dm=messages.filter(m=>!m.isSystem&&!m.isRequest);if(dm.length===0){b.innerHTML='<div class="msg system">💬 No messages yet. Start chatting!</div>';return}let html='';for(const m of dm){const ia=m.user==='aish',t=new Date(m.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),uc=ia?'aish':'user1',sn=ia?'👑 @aish':`@${m.user}`;let dt=m.text,ie=false;if(m.encrypted&&m.iv){ie=true;dt=await decryptMessage(m.text,m.iv)}const il=dt.startsWith('http://')||dt.startsWith('https://'),ft=il?`<a href="${dt}" target="_blank">${dt}</a>`:dt,eb=ie?'<span class="e2ee-badge">🔒</span>':'';html+=`<div class="msg ${uc}"><div class="sender">${sn}${ia?' <span class="admin-badge">Admin</span>':''}</div><div class="text-content">${ft} ${eb}</div><div class="time-row">${t}${isAdmin?`<button class="delete-btn" onclick="deleteMessage('${m.id}')">✕</button>`:''}</div></div>`}b.innerHTML=html;b.scrollTop=b.scrollHeight;document.getElementById('msgCount').textContent=dm.length+' messages'}
+    async function displayMessages(){if(!isKeySet()){disableFeatures();return}const b=document.getElementById('chatBox'),dm=messages.filter(m=>!m.isSystem&&!m.isRequest);if(dm.length===0){b.innerHTML='<div class="msg system">💬 No messages yet. Start chatting!</div>';return}let html='';for(const m of dm){const ia=m.user==='aish',t=new Date(m.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),uc=ia?'aish':'user1',sn=ia?'👑 @aish':`@${m.user}`;let dt=m.text,ie=false;if(m.encrypted&&m.iv){ie=true;dt=await decryptMessage(m.text,m.iv)}const il=dt.startsWith('http://')||dt.startsWith('https://'),ft=il?`<a href="${dt}" target="_blank">${dt}</a>`:dt,eb=ie?'<span class="e2ee-badge">🔒</span>':'';html+=`<div class="msg ${uc}"><div class="sender">${sn}${ia?' <span class="admin-badge">Admin</span>':''}</div><div class="text-content">${ft} ${eb}</div><div class="time-row">${t}${isAdmin?`<button class="delete-btn" onclick="deleteMessage('${m.id}')">✕</button>`:''}</div></div>`}b.innerHTML=html;b.scrollTop=b.scrollHeight;document.getElementById('msgCount').textContent=dm.length+' messages'}
     function showStatus(t,type){const e=document.getElementById('statusText');e.textContent=t;e.style.color=type==='success'?'#34c759':type==='error'?'#ff3b30':type==='loading'?'#fffc00':'#888';if(type!=='loading')setTimeout(()=>{e.textContent='Connected';e.style.color='#888'},4000)}
     function updateStatus(o){document.getElementById('statusDot').className='status-dot '+(o?'online':'offline');document.getElementById('statusText').textContent=o?'Connected':'Disconnected'}
 
-    async function init(){myUniqueId=await getUniqueId();if(encryptionKey){document.getElementById('encryptBox').classList.remove('show')}else{document.getElementById('encryptBox').classList.add('show')}fetchMessages();setInterval(fetchMessages,5000);if(currentUser!=='aish'){document.getElementById('chatInput').disabled=true;document.getElementById('chatInput').placeholder='⏳ Wait for admin approval...'}}
+    async function init(){myUniqueId=await getUniqueId();if(encryptionKey){document.getElementById('encryptBox').classList.remove('show');if(keyHint){const hd=document.getElementById('keyHintDisplay');hd.innerHTML='💡 <strong>Hint:</strong> '+keyHint;hd.style.display='block'}enableFeatures();fetchMessages()}else{document.getElementById('encryptBox').classList.add('show');disableFeatures()}setInterval(fetchMessages,5000);if(currentUser!=='aish'){document.getElementById('chatInput').disabled=true;document.getElementById('chatInput').placeholder='⏳ Wait for admin approval...'}}
     document.getElementById('chatInput').addEventListener('keydown',e=>{if(e.key==='Enter')sendMessage()});
     init();
 </script>
