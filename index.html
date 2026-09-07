@@ -1,590 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Live Link</title>
+  <title>Live Link</title>
 
-<style>
-*{
-  box-sizing:border-box;
-  margin:0;
-  padding:0;
-  font-family:Arial,sans-serif;
-}
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-body{
-  min-height:100vh;
-  background:#0f172a;
-  color:#fff;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  padding:20px;
-}
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: #f5f5f5;
+      font-family: Arial, sans-serif;
+    }
 
-.container{
-  width:100%;
-  max-width:520px;
-  background:#1e293b;
-  border-radius:18px;
-  padding:25px;
-  box-shadow:0 20px 50px rgba(0,0,0,.35);
-}
+    .box {
+      width: 100%;
+      max-width: 600px;
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
 
-/* USER */
+    h1 {
+      margin-top: 0;
+      text-align: center;
+      font-size: 25px;
+    }
 
-#userPage{
-  text-align:center;
-}
+    .url-box {
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #fafafa;
+      word-break: break-all;
+      margin-bottom: 15px;
+      color: #333;
+    }
 
-#userPage h1{
-  font-size:24px;
-  margin-bottom:20px;
-}
+    button {
+      width: 100%;
+      padding: 13px;
+      border: 0;
+      border-radius: 8px;
+      background: #111;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
 
-.liveLink{
-  display:block;
-  width:100%;
-  padding:15px;
-  border-radius:10px;
-  background:#0f172a;
-  color:#60a5fa;
-  text-decoration:none;
-  word-break:break-all;
-  margin-bottom:12px;
-  text-align:left;
-}
+    button:hover {
+      background: #333;
+    }
 
-.liveLink:hover{
-  text-decoration:underline;
-}
-
-.copyBtn{
-  width:100%;
-  padding:14px;
-  border:0;
-  border-radius:10px;
-  background:#16a34a;
-  color:#fff;
-  font-size:16px;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-.copyBtn:hover{
-  background:#15803d;
-}
-
-/* ADMIN */
-
-#adminPage{
-  display:none;
-}
-
-#adminPage h1{
-  text-align:center;
-  margin-bottom:20px;
-}
-
-label{
-  display:block;
-  margin-bottom:7px;
-  color:#cbd5e1;
-}
-
-input{
-  width:100%;
-  padding:14px;
-  border:0;
-  outline:0;
-  border-radius:10px;
-  font-size:15px;
-  margin-bottom:12px;
-}
-
-.adminBtn{
-  width:100%;
-  padding:14px;
-  border:0;
-  border-radius:10px;
-  background:#2563eb;
-  color:#fff;
-  font-size:16px;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-.adminBtn:hover{
-  background:#1d4ed8;
-}
-
-.message{
-  text-align:center;
-  margin-top:12px;
-  min-height:20px;
-}
-
-.success{
-  color:#86efac;
-}
-
-.error{
-  color:#fca5a5;
-}
-
-.current{
-  margin-top:25px;
-  padding:15px;
-  border-radius:10px;
-  background:#0f172a;
-  display:none;
-}
-
-.currentTitle{
-  color:#94a3b8;
-  font-size:13px;
-  margin-bottom:8px;
-}
-
-.currentLink{
-  color:#60a5fa;
-  word-break:break-all;
-}
-
-/* Small admin access */
-
-.adminAccess{
-  margin-top:20px;
-  text-align:center;
-}
-
-.adminAccess a{
-  color:#64748b;
-  font-size:12px;
-  text-decoration:none;
-}
-</style>
+    #message {
+      text-align: center;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+  </style>
 </head>
 
 <body>
 
-<div class="container">
+  <div class="box">
 
-  <!-- ================= USER PAGE ================= -->
+    <h1>Your Link</h1>
 
-  <div id="userPage">
-
-    <h1>🔗 Live Link</h1>
-
-    <div id="userContent">
-
-      <a
-        id="userLink"
-        class="liveLink"
-        href="#"
-        target="_blank"
-        rel="noopener noreferrer">
-      </a>
-
-      <button
-        class="copyBtn"
-        onclick="copyLink()">
-        📋 Copy Link
-      </button>
-
-      <div
-        id="copyMessage"
-        class="message">
-      </div>
-
+    <div id="url" class="url-box">
+      Loading...
     </div>
 
-    <div
-      id="noLink"
-      style="color:#94a3b8;display:none;">
-      No live link available.
-    </div>
-
-    <!-- Hidden admin access -->
-    <div class="adminAccess">
-      <a href="?admin">Admin</a>
-    </div>
-
-  </div>
-
-
-  <!-- ================= ADMIN PAGE ================= -->
-
-  <div id="adminPage">
-
-    <h1>🔐 Admin Panel</h1>
-
-    <label for="adminPassword">
-      Admin Password
-    </label>
-
-    <input
-      id="adminPassword"
-      type="password"
-      placeholder="Enter password">
-
-    <button
-      class="adminBtn"
-      onclick="login()">
-      Login
+    <button onclick="copyLink()">
+      Copy Link
     </button>
 
-    <div
-      id="loginMessage"
-      class="message">
-    </div>
-
-
-    <!-- Controls appear after login -->
-
-    <div id="controls" style="display:none;">
-
-      <label style="margin-top:20px;">
-        Live Website URL
-      </label>
-
-      <input
-        id="liveUrl"
-        type="url"
-        placeholder="https://example.com">
-
-      <button
-        class="adminBtn"
-        onclick="saveLink()">
-        💾 Save Live Link
-      </button>
-
-      <div
-        id="saveMessage"
-        class="message">
-      </div>
-
-
-      <div
-        id="currentBox"
-        class="current">
-
-        <div class="currentTitle">
-          Current Live Link
-        </div>
-
-        <div
-          id="currentLink"
-          class="currentLink">
-        </div>
-
-      </div>
-
-    </div>
+    <div id="message"></div>
 
   </div>
 
-</div>
+  <script>
 
+    let outputURL = "";
 
-<script>
+    async function loadURL() {
 
-/*
-====================================================
-                    SETTINGS
-====================================================
-*/
+      try {
 
-const ADMIN_PASSWORD = "admin123";
+        const response = await fetch(
+          "url.txt?t=" + Date.now()
+        );
 
-const STORAGE_KEY = "my_live_link";
+        if (!response.ok) {
+          throw new Error("URL not found");
+        }
 
+        const url = (await response.text()).trim();
 
-/*
-====================================================
-                    PAGE MODE
-====================================================
-*/
+        if (!url) {
 
-const isAdmin =
-  new URLSearchParams(location.search).has("admin");
+          document.getElementById("url").innerText =
+            "No URL available";
 
-if(isAdmin){
+          return;
+        }
 
-  document.getElementById("userPage")
-    .style.display = "none";
+        outputURL = url;
 
-  document.getElementById("adminPage")
-    .style.display = "block";
+        document.getElementById("url").innerText =
+          url;
 
-}else{
+      } catch (error) {
 
-  document.getElementById("userPage")
-    .style.display = "block";
+        document.getElementById("url").innerText =
+          "Unable to load URL";
 
-  document.getElementById("adminPage")
-    .style.display = "none";
-
-  showUserLink();
-
-}
-
-
-/*
-====================================================
-                    ADMIN LOGIN
-====================================================
-*/
-
-function login(){
-
-  const password =
-    document.getElementById("adminPassword").value;
-
-  const message =
-    document.getElementById("loginMessage");
-
-
-  if(password === ADMIN_PASSWORD){
-
-    document.getElementById("controls")
-      .style.display = "block";
-
-    message.textContent =
-      "✅ Login successful";
-
-    message.className =
-      "message success";
-
-
-    // Load existing link
-
-    const saved =
-      localStorage.getItem(STORAGE_KEY);
-
-    if(saved){
-
-      document.getElementById("liveUrl").value =
-        saved;
-
-      document.getElementById("currentBox")
-        .style.display = "block";
-
-      document.getElementById("currentLink")
-        .textContent = saved;
+      }
 
     }
 
-  }else{
 
-    message.textContent =
-      "❌ Wrong password";
+    async function copyLink() {
 
-    message.className =
-      "message error";
+      if (!outputURL) {
+        return;
+      }
 
-  }
+      try {
 
-}
+        await navigator.clipboard.writeText(outputURL);
 
+        document.getElementById("message").innerText =
+          "✓ Link copied";
 
-/*
-====================================================
-                    SAVE LINK
-====================================================
-*/
+      } catch (error) {
 
-function saveLink(){
+        const textarea =
+          document.createElement("textarea");
 
-  const input =
-    document.getElementById("liveUrl");
+        textarea.value = outputURL;
 
-  const value =
-    input.value.trim();
+        document.body.appendChild(textarea);
 
-  const message =
-    document.getElementById("saveMessage");
+        textarea.select();
 
+        document.execCommand("copy");
 
-  if(!value){
+        textarea.remove();
 
-    message.textContent =
-      "❌ Please enter a URL";
+        document.getElementById("message").innerText =
+          "✓ Link copied";
 
-    message.className =
-      "message error";
-
-    return;
-
-  }
-
-
-  // Validate URL
-
-  try{
-
-    const url =
-      new URL(value);
-
-    if(
-      url.protocol !== "http:" &&
-      url.protocol !== "https:"
-    ){
-
-      throw new Error();
+      }
 
     }
 
-  }catch{
+    loadURL();
 
-    message.textContent =
-      "❌ Enter a valid http/https URL";
-
-    message.className =
-      "message error";
-
-    return;
-
-  }
-
-
-  /*
-    Save in browser localStorage.
-    No database required.
-  */
-
-  localStorage.setItem(
-    STORAGE_KEY,
-    value
-  );
-
-
-  document.getElementById("currentBox")
-    .style.display = "block";
-
-  document.getElementById("currentLink")
-    .textContent = value;
-
-
-  message.textContent =
-    "✅ Live link saved!";
-
-  message.className =
-    "message success";
-
-}
-
-
-/*
-====================================================
-                    USER PAGE
-====================================================
-*/
-
-function showUserLink(){
-
-  const saved =
-    localStorage.getItem(STORAGE_KEY);
-
-  const userContent =
-    document.getElementById("userContent");
-
-  const noLink =
-    document.getElementById("noLink");
-
-  const userLink =
-    document.getElementById("userLink");
-
-
-  if(!saved){
-
-    userContent.style.display =
-      "none";
-
-    noLink.style.display =
-      "block";
-
-    return;
-
-  }
-
-
-  userContent.style.display =
-    "block";
-
-  noLink.style.display =
-    "none";
-
-
-  userLink.href =
-    saved;
-
-  userLink.textContent =
-    saved;
-
-}
-
-
-/*
-====================================================
-                    COPY LINK
-====================================================
-*/
-
-async function copyLink(){
-
-  const saved =
-    localStorage.getItem(STORAGE_KEY);
-
-  if(!saved){
-    return;
-  }
-
-
-  try{
-
-    await navigator.clipboard.writeText(saved);
-
-  }catch{
-
-    const textarea =
-      document.createElement("textarea");
-
-    textarea.value =
-      saved;
-
-    document.body.appendChild(textarea);
-
-    textarea.select();
-
-    document.execCommand("copy");
-
-    textarea.remove();
-
-  }
-
-
-  const message =
-    document.getElementById("copyMessage");
-
-  message.textContent =
-    "✅ Link copied!";
-
-  message.className =
-    "message success";
-
-
-  setTimeout(()=>{
-
-    message.textContent = "";
-
-  },2000);
-
-}
-
-</script>
+  </script>
 
 </body>
 </html>
