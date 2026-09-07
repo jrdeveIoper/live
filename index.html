@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Live Link</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:#0f172a;
+  color:white;
+  font-family:Arial,sans-serif;
+  padding:20px;
+}
+
+.box{
+  width:100%;
+  max-width:500px;
+  background:#1e293b;
+  padding:25px;
+  border-radius:18px;
+}
+
+input{
+  width:100%;
+  padding:14px;
+  border:0;
+  outline:0;
+  border-radius:10px;
+  font-size:16px;
+  margin-bottom:10px;
+}
+
+button{
+  width:100%;
+  padding:14px;
+  border:0;
+  border-radius:10px;
+  background:#2563eb;
+  color:white;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+#result{
+  display:none;
+  margin-top:15px;
+}
+
+#result a{
+  display:block;
+  padding:14px;
+  background:#0f172a;
+  color:#60a5fa;
+  border-radius:10px;
+  word-break:break-all;
+  text-decoration:none;
+  margin-bottom:10px;
+}
+
+.copy{
+  background:#16a34a;
+}
+
+#msg{
+  text-align:center;
+  color:#86efac;
+  margin-top:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+
+  <input
+    id="url"
+    type="url"
+    placeholder="Paste live link..."
+  >
+
+  <button onclick="showLink()">
+    Show Link
+  </button>
+
+  <div id="result">
+
+    <a id="output"
+       target="_blank"
+       rel="noopener noreferrer">
+    </a>
+
+    <button class="copy" onclick="copyLink()">
+      📋 Copy Link
+    </button>
+
+  </div>
+
+  <div id="msg"></div>
+
+</div>
+
+<script>
+
+function showLink(){
+
+  const value =
+    document.getElementById("url").value.trim();
+
+  if(!value){
+    document.getElementById("msg").textContent =
+      "Paste a link first.";
+    return;
+  }
+
+  try{
+    const u = new URL(value);
+
+    if(u.protocol !== "http:" &&
+       u.protocol !== "https:"){
+      throw new Error();
+    }
+  }
+  catch{
+    document.getElementById("msg").textContent =
+      "Invalid URL.";
+    return;
+  }
+
+  const output =
+    document.getElementById("output");
+
+  output.href = value;
+  output.textContent = value;
+
+  document.getElementById("result")
+    .style.display = "block";
+
+  document.getElementById("msg")
+    .textContent = "";
+
+  /*
+    Link frontend URL ke hash me save hota hai.
+    No database required.
+  */
+
+  location.hash =
+    encodeURIComponent(value);
+}
+
+
+async function copyLink(){
+
+  const value =
+    document.getElementById("output").href;
+
+  try{
+    await navigator.clipboard.writeText(value);
+  }
+  catch{
+
+    const textarea =
+      document.createElement("textarea");
+
+    textarea.value = value;
+
+    document.body.appendChild(textarea);
+    textarea.select();
+
+    document.execCommand("copy");
+
+    textarea.remove();
+  }
+
+  document.getElementById("msg")
+    .textContent = "✅ Link copied!";
+
+}
+
+
+/* Hash se link automatically load */
+
+window.addEventListener("load",()=>{
+
+  if(location.hash){
+
+    try{
+
+      const value =
+        decodeURIComponent(
+          location.hash.substring(1)
+        );
+
+      document.getElementById("url").value =
+        value;
+
+      showLink();
+
+    }catch{}
+
+  }
+
+});
+
+</script>
+
+</body>
+</html>
