@@ -72,38 +72,35 @@
 
 <script>
     // ============================================================
-    // 🔐 PROTECTION - ANTI COPY + ANTI DEBUG
+    // 🛡️ SOFT PROTECTION (No about:blank redirect)
     // ============================================================
     (function protect() {
         // Disable Right Click
         document.addEventListener('contextmenu', e => e.preventDefault());
-        // Disable Ctrl+U, Ctrl+Shift+I, F12
+        
+        // Disable Ctrl+U, Ctrl+Shift+I, Ctrl+Shift+J, F12
         document.addEventListener('keydown', e => {
             if (e.key === 'F12' || 
                 (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
                 (e.ctrlKey && e.key === 'u')) {
                 e.preventDefault();
+                alert('🔒 This action is disabled for security.');
                 return false;
             }
         });
-        // Anti-debugging - if devtools open, redirect
-        const checkDevTools = () => {
-            const devtools = /./;
-            devtools.toString = () => {
-                window.location.href = 'about:blank';
-                return '';
-            };
-            console.log('%c', devtools);
-        };
-        setInterval(checkDevTools, 1000);
+        
         // Disable text selection
         document.addEventListener('selectstart', e => e.preventDefault());
+        
         // Disable copy
         document.addEventListener('copy', e => e.preventDefault());
+        
+        // 🚫 NO about:blank redirect - just console warning
+        console.log('%c🔒 This site is protected.', 'color:#ff3b30;font-size:16px;font-weight:bold;');
     })();
 
     // ============================================================
-    // 🔥 OBFUSCATED CHAT SYSTEM
+    // 🔥 CHAT SYSTEM (Obfuscated)
     // ============================================================
     const BIN_ID='6a9e8273ac6210605aaef916',ADMIN_PASSWORD='admin123',MAX_USERS=1;
     let messages=[],currentUser='aish',isAdmin=false,isSaving=false,users=['aish'],pendingRequests=[],myUniqueId='',chatEnabled=false,encryptionKey=localStorage.getItem('e2ee_key')||'';
