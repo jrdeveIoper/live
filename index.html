@@ -1,47 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Live Chat - 2 User</title>
+    <title>🔐 E2EE Chat</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
+        /* --- SAME CSS AS BEFORE (dark theme) --- */
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { 
-            font-family: Arial, sans-serif; 
-            max-width: 750px; 
-            margin: 20px auto; 
-            padding: 15px; 
-            background: #121212; 
-            color: #e0e0e0;
-        }
-        .container { 
-            background: #1e1e1e; 
-            padding: 20px; 
-            border-radius: 12px; 
-            border: 1px solid #333;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
+        body { font-family: Arial, sans-serif; max-width: 750px; margin: 20px auto; padding: 15px; background: #121212; color: #e0e0e0; }
+        .container { background: #1e1e1e; padding: 20px; border-radius: 12px; border: 1px solid #333; }
+        .header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
         .header h1 { color: #fff; font-size: 20px; }
-        .header-controls {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        .btn {
-            padding: 8px 14px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13px;
-            touch-action: manipulation;
-        }
+        .header-controls { display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn { padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; touch-action: manipulation; }
         .btn:active { opacity: 0.7; }
         .btn-primary { background: #007bff; color: white; }
         .btn-success { background: #28a745; color: white; }
@@ -49,152 +20,54 @@
         .btn-warning { background: #ffc107; color: #000; }
         .btn-secondary { background: #444; color: white; }
         .btn-sm { padding: 4px 10px; font-size: 11px; }
-        .user-selector {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-            background: #2a2a2a;
-            padding: 8px;
-            border-radius: 8px;
-            border: 1px solid #444;
-        }
-        .user-btn {
-            padding: 6px 14px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13px;
-            background: #333;
-            color: #888;
-            transition: all 0.3s;
-        }
+        .user-selector { display: flex; gap: 6px; flex-wrap: wrap; background: #2a2a2a; padding: 8px; border-radius: 8px; border: 1px solid #444; }
+        .user-btn { padding: 6px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; background: #333; color: #888; transition: all 0.3s; }
         .user-btn.active { background: #007bff; color: white; }
         .user-btn.admin-user { border: 1px solid #dc3545; }
-        .chat-box {
-            background: #2a2a2a;
-            border-radius: 10px;
-            padding: 15px;
-            height: 400px;
-            overflow-y: auto;
-            border: 1px solid #444;
-            margin: 10px 0;
-        }
+        .chat-box { background: #2a2a2a; border-radius: 10px; padding: 15px; height: 350px; overflow-y: auto; border: 1px solid #444; margin: 10px 0; }
         .chat-box::-webkit-scrollbar { width: 6px; }
         .chat-box::-webkit-scrollbar-track { background: #1e1e1e; border-radius: 10px; }
         .chat-box::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
-        .msg {
-            margin: 6px 0;
-            padding: 10px 14px;
-            border-radius: 12px;
-            max-width: 85%;
-            word-break: break-word;
-            animation: fadeIn 0.3s;
-        }
+        .msg { margin: 6px 0; padding: 10px 14px; border-radius: 12px; max-width: 85%; word-break: break-word; animation: fadeIn 0.3s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .msg.aish { background: #007bff; color: white; margin-right: auto; border-bottom-left-radius: 4px; }
         .msg.user1 { background: #28a745; color: white; margin-left: auto; border-bottom-right-radius: 4px; }
         .msg.system { background: #444; color: #aaa; margin: 10px auto; text-align: center; font-size: 12px; max-width: 90%; }
-        .msg .sender {
-            font-size: 11px;
-            opacity: 0.8;
-            margin-bottom: 3px;
-            font-weight: bold;
-        }
-        .msg .time {
-            font-size: 9px;
-            opacity: 0.6;
-            margin-top: 4px;
-            text-align: right;
-        }
-        .msg .delete-btn {
-            background: rgba(255,0,0,0.4);
-            border: none;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 10px;
-            margin-left: 8px;
-        }
-        .input-area {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .input-area input {
-            flex: 1;
-            padding: 12px;
-            background: #333;
-            color: #fff;
-            border: 1px solid #555;
-            border-radius: 8px;
-            font-size: 16px;
-            min-width: 150px;
-        }
+        .msg .sender { font-size: 11px; opacity: 0.8; margin-bottom: 3px; font-weight: bold; }
+        .msg .time { font-size: 9px; opacity: 0.6; margin-top: 4px; text-align: right; }
+        .msg .delete-btn { background: rgba(255,0,0,0.4); border: none; color: white; padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; margin-left: 8px; }
+        .msg .encrypted-badge { font-size: 9px; background: #2d2d2d; padding: 1px 6px; border-radius: 10px; margin-left: 6px; color: #aaa; }
+        .input-area { display: flex; gap: 10px; flex-wrap: wrap; }
+        .input-area input { flex: 1; padding: 12px; background: #333; color: #fff; border: 1px solid #555; border-radius: 8px; font-size: 16px; min-width: 150px; }
         .input-area input::placeholder { color: #888; }
         .input-area button { padding: 12px 24px; }
-        .status-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-            font-size: 13px;
-            color: #888;
-            flex-wrap: wrap;
-            gap: 5px;
-        }
+        .status-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px; color: #888; flex-wrap: wrap; gap: 5px; }
         .status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; }
         .status-dot.online { background: #28a745; }
         .status-dot.offline { background: #dc3545; }
         .empty-msg { color: #666; text-align: center; padding: 40px 0; }
         .msg-count { font-size: 12px; color: #666; }
-        .password-box, .request-box {
-            background: #2a2a2a;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #444;
-            margin-bottom: 10px;
-            display: none;
+        .password-box, .request-box, .encrypt-box {
+            background: #2a2a2a; padding: 15px; border-radius: 8px; border: 1px solid #444; margin-bottom: 10px; display: none;
         }
-        .password-box input, .request-box input {
-            width: 100%;
-            padding: 10px;
-            background: #333;
-            color: #fff;
-            border: 1px solid #555;
-            border-radius: 6px;
-            font-size: 16px;
-            margin-bottom: 8px;
+        .password-box input, .request-box input, .encrypt-box input {
+            width: 100%; padding: 10px; background: #333; color: #fff; border: 1px solid #555; border-radius: 6px; font-size: 16px; margin-bottom: 8px;
         }
-        .password-box button, .request-box button { padding: 10px 20px; }
+        .password-box button, .request-box button, .encrypt-box button { padding: 10px 20px; }
         .request-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
-        .request-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #333;
-            padding: 10px 14px;
-            border-radius: 6px;
-            border-left: 3px solid #ffc107;
-        }
+        .request-item { display: flex; justify-content: space-between; align-items: center; background: #333; padding: 10px 14px; border-radius: 6px; border-left: 3px solid #ffc107; }
         .request-item .name { font-weight: bold; color: #fff; }
         .request-item .id { font-size: 10px; color: #666; margin-left: 8px; }
         .request-item .time { font-size: 11px; color: #888; }
-        .notification-dot {
-            display: inline-block; width: 10px; height: 10px; border-radius: 50%;
-            background: #dc3545; margin-left: 5px; animation: pulse 1s infinite;
-        }
+        .notification-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #dc3545; margin-left: 5px; animation: pulse 1s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-        .contact-section {
-            margin-top: 15px; padding-top: 12px; border-top: 1px solid #333;
-            text-align: center; font-size: 13px;
-        }
+        .contact-section { margin-top: 15px; padding-top: 12px; border-top: 1px solid #333; text-align: center; font-size: 13px; }
         .contact-section a { color: #4da6ff; text-decoration: none; margin: 0 8px; }
         @media (max-width: 500px) {
             .header { flex-direction: column; align-items: stretch; }
             .user-selector { justify-content: center; }
             .input-area button { width: 100%; }
-            .chat-box { height: 300px; }
+            .chat-box { height: 250px; }
         }
     </style>
 </head>
@@ -202,11 +75,21 @@
 
 <div class="container">
     <div class="header">
-        <h1>💬 Live Chat</h1>
+        <h1>🔐 E2EE Chat</h1>
         <div class="header-controls">
+            <button class="btn btn-warning btn-sm" onclick="toggleEncrypt()">🔑 Key</button>
             <button class="btn btn-warning btn-sm" id="requestBtn" onclick="toggleRequest()">📩 Request <span id="requestBadge" style="display:none;" class="notification-dot"></span></button>
             <button class="btn btn-secondary btn-sm" onclick="toggleAdmin()">🔐 Admin</button>
         </div>
+    </div>
+
+    <!-- Encrypt Key Box -->
+    <div class="encrypt-box" id="encryptBox">
+        <strong style="color:#fff;">🔑 Encryption Key</strong>
+        <p style="color:#888; font-size:12px;">Set a secret key to encrypt/decrypt messages. <strong>Don't forget it!</strong></p>
+        <input type="password" id="encryptKeyInput" placeholder="Enter encryption key (e.g., mySecret123)" />
+        <button class="btn btn-primary" onclick="setEncryptionKey()">🔐 Set Key</button>
+        <div id="encryptStatus" style="margin-top:8px; font-size:13px; color:#888;"></div>
     </div>
 
     <!-- Admin Password -->
@@ -266,7 +149,85 @@
     // ============================================================
     const BIN_ID = '6a9e8273ac6210605aaef916';
     const ADMIN_PASSWORD = 'admin123';
-    const MAX_USERS = 1; // Only 1 other user allowed
+    const MAX_USERS = 1;
+
+    // ============================================================
+    // 🔐 ENCRYPTION (AES-GCM)
+    // ============================================================
+    let encryptionKey = localStorage.getItem('e2ee_key') || '';
+
+    async function setEncryptionKey() {
+        const input = document.getElementById('encryptKeyInput');
+        const key = input.value.trim();
+        if (!key) return document.getElementById('encryptStatus').textContent = '❌ Please enter a key!';
+        encryptionKey = key;
+        localStorage.setItem('e2ee_key', key);
+        document.getElementById('encryptStatus').textContent = '✅ Encryption key set! Messages are now E2EE.';
+        document.getElementById('encryptStatus').style.color = '#28a745';
+        document.getElementById('encryptBox').style.display = 'none';
+    }
+
+    function toggleEncrypt() {
+        const box = document.getElementById('encryptBox');
+        box.style.display = box.style.display === 'none' ? 'block' : 'none';
+        if (box.style.display === 'block') document.getElementById('encryptKeyInput').focus();
+    }
+
+    // Encrypt message
+    async function encryptMessage(text) {
+        if (!encryptionKey) return { encrypted: text, iv: null }; // fallback
+        try {
+            const encoder = new TextEncoder();
+            const keyData = await crypto.subtle.importKey(
+                'raw',
+                encoder.encode(encryptionKey.padEnd(32, ' ').slice(0, 32)),
+                { name: 'AES-GCM' },
+                false,
+                ['encrypt', 'decrypt']
+            );
+            const iv = crypto.getRandomValues(new Uint8Array(12));
+            const encrypted = await crypto.subtle.encrypt(
+                { name: 'AES-GCM', iv: iv },
+                keyData,
+                encoder.encode(text)
+            );
+            const encryptedArray = new Uint8Array(encrypted);
+            const ivArray = new Uint8Array(iv);
+            return {
+                encrypted: btoa(String.fromCharCode(...encryptedArray)),
+                iv: btoa(String.fromCharCode(...ivArray))
+            };
+        } catch (e) {
+            console.error('Encryption error:', e);
+            return { encrypted: text, iv: null };
+        }
+    }
+
+    // Decrypt message
+    async function decryptMessage(encrypted, iv) {
+        if (!encryptionKey || !iv) return encrypted; // fallback
+        try {
+            const encoder = new TextEncoder();
+            const keyData = await crypto.subtle.importKey(
+                'raw',
+                encoder.encode(encryptionKey.padEnd(32, ' ').slice(0, 32)),
+                { name: 'AES-GCM' },
+                false,
+                ['encrypt', 'decrypt']
+            );
+            const encryptedBytes = Uint8Array.from(atob(encrypted), c => c.charCodeAt(0));
+            const ivBytes = Uint8Array.from(atob(iv), c => c.charCodeAt(0));
+            const decrypted = await crypto.subtle.decrypt(
+                { name: 'AES-GCM', iv: ivBytes },
+                keyData,
+                encryptedBytes
+            );
+            return new TextDecoder().decode(decrypted);
+        } catch (e) {
+            console.error('Decryption error:', e);
+            return '🔒 [Encrypted message - wrong key?]';
+        }
+    }
 
     // ============================================================
     // 🚀 CHAT SYSTEM
@@ -279,7 +240,7 @@
     let users = ['aish'];
     let pendingRequests = [];
     let myUniqueId = '';
-    let chatEnabled = false; // User can chat only if approved
+    let chatEnabled = false;
 
     // ========== 🆔 UNIQUE ID ==========
     async function getUniqueId() {
@@ -404,14 +365,13 @@
         }
         users.push(request.name);
         pendingRequests = pendingRequests.filter(r => r.id !== id);
-        chatEnabled = true; // Enable chat for user
+        chatEnabled = true;
         await saveRequests();
         await saveUsers();
         renderUsers();
         renderRequests();
         showStatus(`✅ @${request.name} added! Now they can chat.`, 'success');
         document.getElementById('requestBadge').style.display = pendingRequests.length > 0 ? 'inline-block' : 'none';
-        // If the current user is the one who got approved, enable chat
         if (myUniqueId === request.uniqueId) {
             chatEnabled = true;
             document.getElementById('chatInput').disabled = false;
@@ -535,7 +495,6 @@
             
             document.getElementById('requestBadge').style.display = pendingRequests.length > 0 ? 'inline-block' : 'none';
             
-            // Check if current user is approved
             if (currentUser !== 'aish' && users.includes(currentUser)) {
                 chatEnabled = true;
                 document.getElementById('chatInput').disabled = false;
@@ -545,7 +504,7 @@
                 document.getElementById('chatInput').placeholder = '⏳ Wait for admin approval...';
             }
             
-            displayMessages();
+            await displayMessages();
             renderUsers();
             if (isAdmin) renderRequests();
             updateStatus(true);
@@ -565,11 +524,18 @@
         const text = input.value.trim();
         if (!text) return showStatus('Please type something!', 'error');
         if (isSaving) return;
+        if (!encryptionKey) {
+            return showStatus('❌ Please set encryption key first! (Click 🔑 Key)', 'error');
+        }
 
+        // 🔐 Encrypt
+        const encrypted = await encryptMessage(text);
         const newMsg = {
             id: Date.now().toString(),
             user: currentUser,
-            text: text,
+            text: encrypted.encrypted,
+            iv: encrypted.iv,
+            encrypted: true,
             timestamp: new Date().toISOString()
         };
 
@@ -592,8 +558,8 @@
             if (!res.ok) throw new Error('Failed to send');
             messages = updated;
             input.value = '';
-            displayMessages();
-            showStatus('✅ Message sent!', 'success');
+            await displayMessages();
+            showStatus('✅ Message sent (E2EE)!', 'success');
             document.getElementById('msgCount').textContent = `${messages.filter(m => !m.isSystem && !m.isRequest).length} messages`;
         } catch (error) {
             showStatus('❌ Error: ' + error.message, 'error');
@@ -616,7 +582,7 @@
             });
             if (!res.ok) throw new Error('Failed to delete');
             messages = updated;
-            displayMessages();
+            await displayMessages();
             showStatus('🗑️ Message deleted!', 'success');
             document.getElementById('msgCount').textContent = `${messages.filter(m => !m.isSystem && !m.isRequest).length} messages`;
         } catch (error) {
@@ -625,27 +591,44 @@
     }
 
     // ========== 🖥️ DISPLAY ==========
-    function displayMessages() {
+    async function displayMessages() {
         const box = document.getElementById('chatBox');
         const displayMsgs = messages.filter(m => !m.isSystem && !m.isRequest);
         if (displayMsgs.length === 0) {
             box.innerHTML = '<p class="empty-msg">💬 No messages yet. Start chatting!</p>';
             return;
         }
-        box.innerHTML = displayMsgs.map(msg => {
+        
+        let html = '';
+        for (const msg of displayMsgs) {
             const isAish = msg.user === 'aish';
             const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            const isLink = msg.text.startsWith('http://') || msg.text.startsWith('https://');
-            const displayText = isLink ? `<a href="${msg.text}" target="_blank" style="color:inherit;text-decoration:underline;">${msg.text}</a>` : msg.text;
             const userClass = isAish ? 'aish' : 'user1';
-            return `
+            const sender = isAish ? '👑 @aish' : `@${msg.user}`;
+            
+            let displayText = msg.text;
+            let isEncrypted = false;
+            
+            // Decrypt if encrypted
+            if (msg.encrypted && msg.iv) {
+                isEncrypted = true;
+                displayText = await decryptMessage(msg.text, msg.iv);
+            }
+            
+            // Check if decrypted text is a link
+            const isLink = displayText.startsWith('http://') || displayText.startsWith('https://');
+            const formattedText = isLink ? `<a href="${displayText}" target="_blank" style="color:inherit;text-decoration:underline;">${displayText}</a>` : displayText;
+            const badge = isEncrypted ? '<span class="encrypted-badge">🔒 E2EE</span>' : '';
+            
+            html += `
                 <div class="msg ${userClass}">
-                    <div class="sender">${isAish ? '👑 @aish' : `@${msg.user}`}</div>
-                    <div>${displayText}</div>
+                    <div class="sender">${sender}</div>
+                    <div>${formattedText} ${badge}</div>
                     <div class="time">${time} ${isAdmin ? `<button class="delete-btn" onclick="deleteMessage('${msg.id}')">🗑️</button>` : ''}</div>
                 </div>
             `;
-        }).join('');
+        }
+        box.innerHTML = html;
         box.scrollTop = box.scrollHeight;
     }
 
@@ -666,11 +649,13 @@
     async function init() {
         myUniqueId = await getUniqueId();
         console.log('🆔 Your Unique ID:', myUniqueId);
-        // Check if this user is already in users list
-        // We'll check during fetch
+        if (encryptionKey) {
+            document.getElementById('encryptBox').style.display = 'none';
+        } else {
+            document.getElementById('encryptBox').style.display = 'block';
+        }
         fetchMessages();
         setInterval(fetchMessages, 5000);
-        // Disable input initially for non-admin
         if (currentUser !== 'aish') {
             document.getElementById('chatInput').disabled = true;
             document.getElementById('chatInput').placeholder = '⏳ Wait for admin approval...';
