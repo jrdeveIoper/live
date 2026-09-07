@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Live Links - No Token</title>
+    <title>Live Links - Auto Save</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
@@ -127,32 +127,6 @@
         .message.error { display: block; background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
         .message.loading { display: block; background: #cce5ff; color: #004085; border: 1px solid #b8daff; }
         .empty-msg { color: #6c757d; text-align: center; padding: 20px; font-size: 16px; }
-        .setup-box { 
-            background: #fff3cd; 
-            padding: 15px; 
-            border-radius: 8px; 
-            border: 1px solid #ffc107; 
-            margin: 10px 0; 
-        }
-        .setup-box input { 
-            width: 100%; 
-            padding: 12px; 
-            margin: 8px 0; 
-            border: 1px solid #ced4da; 
-            border-radius: 6px; 
-            font-size: 16px;
-        }
-        .setup-box button { 
-            background: #007bff; 
-            color: white; 
-            border: none; 
-            padding: 10px 20px; 
-            border-radius: 6px; 
-            cursor: pointer; 
-            font-size: 16px;
-            touch-action: manipulation;
-        }
-        .setup-box button:active { background: #0056b3; }
         .auto-tag { 
             background: #28a745; 
             color: white; 
@@ -170,14 +144,6 @@
         }
         .status-dot.online { background: #28a745; }
         .status-dot.offline { background: #dc3545; }
-        .note {
-            background: #e7f3ff;
-            padding: 12px;
-            border-radius: 8px;
-            border-left: 4px solid #007bff;
-            margin: 10px 0;
-            font-size: 14px;
-        }
         @media (max-width: 500px) { 
             .input-group button { width: 100%; } 
             .link-item { flex-direction: column; align-items: stretch; }
@@ -204,24 +170,6 @@
             ⚡ Link daalo aur <strong>Save</strong> dabao - apne aap save ho jayega!
         </p>
         
-        <!-- Gist Setup -->
-        <div id="setupBox" class="setup-box">
-            <strong>⚙️ One-Time Gist Setup</strong>
-            <p style="font-size: 13px; margin: 5px 0;">Sirf ek baar Gist ID daalna hai!</p>
-            
-            <div class="note">
-                📝 <strong>Gist kaise banayein (2 minute):</strong><br>
-                1. <a href="https://gist.github.com" target="_blank">gist.github.com</a> par jao<br>
-                2. Filename: <code>links.txt</code> daalo<br>
-                3. Content: <code>https://example.com</code> daalo<br>
-                4. <strong style="color:#28a745;">Create public gist</strong> click karo<br>
-                5. URL se <strong style="color:#dc3545;">Gist ID</strong> copy karo
-            </div>
-            
-            <input type="text" id="gistInput" placeholder="Paste your Gist ID here" />
-            <button onclick="saveGistId()">💾 Save Gist ID</button>
-        </div>
-        
         <div class="input-group">
             <input type="url" id="linkInput" placeholder="https://example.com/your-link" />
             <button onclick="addLink()">💾 Save Link</button>
@@ -237,9 +185,9 @@
 
 <script>
     // ============================================================
-    // ✅ GIST ID - AUTO PASTE (Aapki ID daal di gayi hai)
+    // ✅ PERMANENT BIN ID - AUTO PASTE (Account se banaya)
     // ============================================================
-    const GIST_ID = 'a9813eeff9b31f75f48bb4f5f3dc7c6e'; // ✅ Permanent ID
+    const BIN_ID = '6a9e8273ac6210605aaef916'; // ✅ Permanent - Kabhi expire nahi hoga
     
     // ============================================================
     // 🚀 NEEYCHE KUCH NAHI BADALNA - SAB AUTO HAI!
@@ -248,69 +196,29 @@
     let currentLinks = [];
     let isSaving = false;
 
-    // ========== 🔑 GIST ID MANAGEMENT ==========
-    function getGistId() {
-        return localStorage.getItem('gist_id') || GIST_ID;
-    }
-
-    function saveGistId() {
-        const input = document.getElementById('gistInput');
-        const gistId = input.value.trim();
-        
-        if (!gistId || gistId.length < 8) {
-            showMessage('❌ Invalid Gist ID!', 'error');
-            return;
-        }
-        
-        localStorage.setItem('gist_id', gistId);
-        document.getElementById('setupBox').style.display = 'none';
-        showMessage('✅ Gist ID saved! Now you can add links.', 'success');
-        fetchLinks();
-    }
-
-    // ========== 📥 FETCH LINKS FROM GIST ==========
+    // ========== 📥 FETCH LINKS FROM JSONBIN ==========
     async function fetchLinks() {
-        const gistId = getGistId();
-        if (!gistId) {
-            document.getElementById('linksContainer').innerHTML = `
-                <div class="setup-box">
-                    <strong>⚙️ Pehle Gist Setup Karein</strong>
-                    <p style="font-size: 13px; margin: 5px 0;">Admin panel mein "One-Time Gist Setup" section mein Gist ID daalein.</p>
-                </div>
-            `;
-            return;
-        }
-
         showMessage('⏳ Loading links...', 'loading');
         
         try {
-            const url = `https://api.github.com/gists/${gistId}`;
+            const url = `https://api.jsonbin.io/v3/b/${BIN_ID}/latest`;
             const response = await fetch(url);
             
             if (!response.ok) {
                 if (response.status === 404) {
-                    showMessage('❌ Gist not found! Check your Gist ID.', 'error');
+                    showMessage('❌ Bin not found! Check your Bin ID.', 'error');
                     return;
                 }
                 throw new Error(`HTTP ${response.status}`);
             }
             
             const data = await response.json();
-            const files = data.files;
-            const linkFile = files['links.txt'] || files['links'] || Object.values(files)[0];
+            currentLinks = data.record.links || [];
             
-            if (!linkFile) {
-                currentLinks = [];
-                displayLinks();
-                updateStatus(true);
-                showMessage('📂 No links file found in gist.', 'error');
-                return;
-            }
-            
-            const content = linkFile.content || '';
-            currentLinks = content.split('\n')
-                .map(line => line.trim())
-                .filter(line => line !== '' && line.startsWith('http'));
+            // Sirf valid URLs filter karein
+            currentLinks = currentLinks.filter(link => 
+                link && typeof link === 'string' && link.startsWith('http')
+            );
                 
             displayLinks();
             updateStatus(true);
@@ -323,16 +231,9 @@
         }
     }
 
-    // ========== 💾 SAVE LINK TO GIST ==========
+    // ========== 💾 SAVE LINK TO JSONBIN ==========
     async function addLink() {
         if (isSaving) return;
-        
-        const gistId = getGistId();
-        if (!gistId) {
-            showMessage('❌ Pehle Gist ID setup karein!', 'error');
-            document.getElementById('setupBox').style.display = 'block';
-            return;
-        }
         
         const input = document.getElementById('linkInput');
         const newLink = input.value.trim();
@@ -355,43 +256,27 @@
         }
         
         isSaving = true;
-        showMessage('⏳ Saving to Gist...', 'loading');
+        showMessage('⏳ Saving to JSONBin...', 'loading');
         
         try {
-            const getUrl = `https://api.github.com/gists/${gistId}`;
-            const getResponse = await fetch(getUrl);
-            const data = await getResponse.json();
+            // Naya links array banayein
+            const updatedLinks = [...currentLinks, newLink];
             
-            const files = data.files;
-            const linkFile = files['links.txt'] || files['links'] || Object.values(files)[0];
-            let currentContent = linkFile ? linkFile.content : '';
-            
-            const lines = currentContent.split('\n').filter(line => line.trim() !== '');
-            if (!lines.includes(newLink)) {
-                lines.push(newLink);
-            }
-            const newContent = lines.join('\n');
-            
-            const updateUrl = `https://api.github.com/gists/${gistId}`;
+            // JSONBin update karein (bina token ke)
+            const updateUrl = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
             const updateResponse = await fetch(updateUrl, {
-                method: 'PATCH',
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    files: {
-                        'links.txt': {
-                            content: newContent
-                        }
-                    }
-                })
+                body: JSON.stringify({ links: updatedLinks })
             });
             
             if (!updateResponse.ok) {
-                throw new Error('Failed to update gist');
+                throw new Error('Failed to update bin');
             }
             
-            currentLinks = lines.filter(line => line.startsWith('http'));
+            currentLinks = updatedLinks;
             displayLinks();
             input.value = '';
             showMessage('✅ Link saved! Visible on all devices.', 'success');
@@ -403,53 +288,31 @@
         }
     }
 
-    // ========== 🗑️ DELETE LINK FROM GIST ==========
+    // ========== 🗑️ DELETE LINK FROM JSONBIN ==========
     async function deleteLink(linkToDelete) {
         if (!confirm(`Delete: ${linkToDelete}?`)) return;
-        
-        const gistId = getGistId();
-        if (!gistId) {
-            showMessage('❌ Gist ID not found!', 'error');
-            return;
-        }
         
         if (isSaving) return;
         isSaving = true;
         showMessage('⏳ Deleting...', 'loading');
         
         try {
-            const getUrl = `https://api.github.com/gists/${gistId}`;
-            const getResponse = await fetch(getUrl);
-            const data = await getResponse.json();
+            const updatedLinks = currentLinks.filter(link => link !== linkToDelete);
             
-            const files = data.files;
-            const linkFile = files['links.txt'] || files['links'] || Object.values(files)[0];
-            let currentContent = linkFile ? linkFile.content : '';
-            
-            const lines = currentContent.split('\n')
-                .filter(line => line.trim() !== '' && line.trim() !== linkToDelete);
-            const newContent = lines.join('\n');
-            
-            const updateUrl = `https://api.github.com/gists/${gistId}`;
+            const updateUrl = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
             const updateResponse = await fetch(updateUrl, {
-                method: 'PATCH',
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    files: {
-                        'links.txt': {
-                            content: newContent
-                        }
-                    }
-                })
+                body: JSON.stringify({ links: updatedLinks })
             });
             
             if (!updateResponse.ok) {
-                throw new Error('Failed to update gist');
+                throw new Error('Failed to update bin');
             }
             
-            currentLinks = lines.filter(line => line.startsWith('http'));
+            currentLinks = updatedLinks;
             displayLinks();
             showMessage('🗑️ Link deleted!', 'success');
             
@@ -534,18 +397,10 @@
         panel.classList.toggle('show');
         if (panel.classList.contains('show')) {
             document.getElementById('linkInput').focus();
-            const gistId = getGistId();
-            if (!gistId) {
-                document.getElementById('setupBox').style.display = 'block';
-            }
         }
     }
 
     // ========== 🚀 INIT ==========
-    if (GIST_ID) {
-        document.getElementById('setupBox').style.display = 'none';
-    }
-    
     fetchLinks();
     setInterval(fetchLinks, 15000);
 </script>
