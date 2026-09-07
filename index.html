@@ -211,10 +211,8 @@
         <!-- 🔐 Password Box -->
         <div class="password-box" id="passwordBox">
             <strong>🔐 Admin Password</strong>
-            <p style="font-size: 13px; margin: 5px 0;">Delete karne ke liye password daalo!</p>
             <input type="password" id="adminPassword" placeholder="Enter admin password" />
             <button onclick="verifyPassword()">✅ Verify Password</button>
-            <p style="font-size: 12px; color: #856404; margin-top: 5px;">💡 Default password: <strong>admin123</strong></p>
         </div>
         
         <div id="adminContent" style="display: none;">
@@ -242,7 +240,7 @@
     const BIN_ID = '6a9e8273ac6210605aaef916';
     
     // 🔐 ADMIN PASSWORD (Yahan apna password daalo)
-    const ADMIN_PASSWORD = 'admin123'; // ⬅️ Isko change kar lo
+    const ADMIN_PASSWORD = 'aish24feb'; // ⬅️ Isko change kar lo
     
     // ============================================================
     // 🚀 NEEYCHE KUCH NAHI BADALNA
@@ -430,8 +428,8 @@
         }
         
         container.innerHTML = currentItems.map(item => {
-            // Check if item is a URL
             const isUrl = item.startsWith('http://') || item.startsWith('https://');
+            const escapedItem = item.replace(/'/g, "\\'").replace(/"/g, '&quot;');
             
             return `
                 <div class="item-card">
@@ -440,8 +438,8 @@
                         ${isUrl ? '<span class="badge link">Link</span>' : '<span class="badge text">Text</span>'}
                     </div>
                     <div>
-                        <button class="copy-btn" onclick="copyItem('${item.replace(/'/g, "\\'")}')">📋 Copy</button>
-                        ${isAdmin ? `<button class="delete-btn" onclick="deleteItem('${item.replace(/'/g, "\\'")}')">🗑️</button>` : ''}
+                        <button class="copy-btn" onclick="copyItem('${escapedItem}')">📋 Copy</button>
+                        ${isAdmin ? `<button class="delete-btn" onclick="deleteItem('${escapedItem}')">🗑️</button>` : ''}
                     </div>
                 </div>
             `;
