@@ -1,524 +1,736 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Live Links - Auto Save</title>
+    <title>Live Chat - User Request</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { 
             font-family: Arial, sans-serif; 
-            max-width: 700px; 
+            max-width: 750px; 
             margin: 20px auto; 
             padding: 15px; 
-            background: #f0f2f5; 
+            background: #121212; 
+            color: #e0e0e0;
         }
         .container { 
-            background: white; 
+            background: #1e1e1e; 
             padding: 20px; 
             border-radius: 12px; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+            border: 1px solid #333;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
         }
-        h1 { 
-            color: #333; 
-            font-size: 22px; 
-            margin-bottom: 15px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            flex-wrap: wrap; 
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
             gap: 10px;
+            margin-bottom: 15px;
         }
-        .admin-btn { 
-            background: #6c757d; 
-            color: white; 
-            border: none; 
-            padding: 10px 20px; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-size: 16px; 
+        .header h1 { color: #fff; font-size: 20px; }
+        .header-controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
             touch-action: manipulation;
         }
-        .admin-btn:active { background: #5a6268; }
-        .admin-panel { 
-            background: #f8f9fa; 
-            padding: 15px; 
-            border-radius: 10px; 
-            margin: 15px 0; 
-            border: 1px solid #dee2e6; 
-            display: none; 
+        .btn:active { opacity: 0.7; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-warning { background: #ffc107; color: #000; }
+        .btn-secondary { background: #444; color: white; }
+        .btn-sm { padding: 4px 10px; font-size: 11px; }
+        .btn-outline { background: transparent; border: 1px solid #555; color: #aaa; }
+        .user-selector {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            background: #2a2a2a;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #444;
         }
-        .admin-panel.show { display: block; }
-        .input-group { 
-            display: flex; 
-            gap: 10px; 
-            flex-wrap: wrap; 
+        .user-btn {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            background: #333;
+            color: #888;
+            transition: all 0.3s;
         }
-        .input-group input { 
-            flex: 1; 
-            padding: 12px; 
-            border: 1px solid #ced4da; 
-            border-radius: 8px; 
-            font-size: 16px; 
-            min-width: 200px; 
+        .user-btn.active { background: #007bff; color: white; }
+        .user-btn.admin-user { border: 1px solid #dc3545; }
+        .user-btn:active { opacity: 0.7; }
+        .chat-box {
+            background: #2a2a2a;
+            border-radius: 10px;
+            padding: 15px;
+            height: 350px;
+            overflow-y: auto;
+            border: 1px solid #444;
+            margin: 10px 0;
         }
-        .input-group button { 
-            padding: 12px 20px; 
-            background: #28a745; 
-            color: white; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-size: 16px; 
-            touch-action: manipulation;
+        .chat-box::-webkit-scrollbar { width: 6px; }
+        .chat-box::-webkit-scrollbar-track { background: #1e1e1e; border-radius: 10px; }
+        .chat-box::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
+        .msg {
+            margin: 6px 0;
+            padding: 10px 14px;
+            border-radius: 12px;
+            max-width: 85%;
+            word-break: break-word;
+            animation: fadeIn 0.3s;
         }
-        .input-group button:active { background: #218838; }
-        .item-card { 
-            background: #fff; 
-            padding: 12px 15px; 
-            margin: 10px 0; 
-            border-radius: 8px; 
-            border: 1px solid #e0e0e0; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            flex-wrap: wrap; 
-            gap: 10px; 
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .msg.aish { background: #007bff; color: white; margin-right: auto; border-bottom-left-radius: 4px; }
+        .msg.user1 { background: #6f42c1; color: white; margin-right: auto; border-bottom-left-radius: 4px; }
+        .msg.user2 { background: #28a745; color: white; margin-left: auto; border-bottom-right-radius: 4px; }
+        .msg.user3 { background: #fd7e14; color: white; margin-left: auto; border-bottom-right-radius: 4px; }
+        .msg.user4 { background: #20c997; color: white; margin-right: auto; border-bottom-left-radius: 4px; }
+        .msg.system { background: #444; color: #aaa; margin: 10px auto; text-align: center; font-size: 12px; max-width: 90%; }
+        .msg .sender {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-bottom: 3px;
+            font-weight: bold;
         }
-        .item-card .content { 
-            flex: 1; 
-            word-break: break-all; 
-            font-size: 14px;
+        .msg .time {
+            font-size: 9px;
+            opacity: 0.6;
+            margin-top: 4px;
+            text-align: right;
         }
-        .item-card .content a { 
-            color: #007bff; 
-            text-decoration: none; 
+        .msg .delete-btn {
+            background: rgba(255,0,0,0.4);
+            border: none;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 10px;
+            margin-left: 8px;
         }
-        .item-card .content a:hover { text-decoration: underline; }
-        .copy-btn { 
-            background: #007bff; 
-            color: white; 
-            border: none; 
-            padding: 8px 15px; 
-            border-radius: 6px; 
-            cursor: pointer; 
-            font-size: 14px; 
-            touch-action: manipulation;
+        .msg .delete-btn:hover { background: rgba(255,0,0,0.7); }
+        .input-area {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
         }
-        .copy-btn:active { background: #0056b3; }
-        .delete-btn { 
-            background: #dc3545; 
-            color: white; 
-            border: none; 
-            padding: 8px 15px; 
-            border-radius: 6px; 
-            cursor: pointer; 
-            font-size: 14px; 
-            margin-left: 5px; 
-            touch-action: manipulation;
+        .input-area input {
+            flex: 1;
+            padding: 12px;
+            background: #333;
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 8px;
+            font-size: 16px;
+            min-width: 150px;
         }
-        .delete-btn:active { background: #c82333; }
-        .message { 
-            padding: 12px; 
-            margin: 10px 0; 
-            border-radius: 8px; 
-            display: none; 
-            font-size: 14px;
+        .input-area input::placeholder { color: #888; }
+        .input-area button { padding: 12px 24px; }
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: #888;
+            flex-wrap: wrap;
+            gap: 5px;
         }
-        .message.success { display: block; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .message.error { display: block; background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .message.loading { display: block; background: #cce5ff; color: #004085; border: 1px solid #b8daff; }
-        .empty-msg { color: #6c757d; text-align: center; padding: 20px; font-size: 16px; }
-        .auto-tag { 
-            background: #28a745; 
-            color: white; 
-            padding: 4px 12px; 
-            border-radius: 20px; 
-            font-size: 12px; 
-            font-weight: bold; 
-        }
-        .status-dot { 
-            display: inline-block; 
-            width: 10px; 
-            height: 10px; 
-            border-radius: 50%; 
-            margin-right: 5px; 
+        .status-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
         }
         .status-dot.online { background: #28a745; }
         .status-dot.offline { background: #dc3545; }
         .badge {
-            display: inline-block;
             font-size: 10px;
             padding: 2px 8px;
             border-radius: 12px;
+            background: #555;
             color: white;
-            background: #6c757d;
         }
-        .badge.link { background: #007bff; }
-        .badge.text { background: #6c757d; }
-        .password-box {
-            background: #fff3cd;
+        .badge.admin { background: #dc3545; }
+        .badge.pending { background: #ffc107; color: #000; }
+        .empty-msg { color: #666; text-align: center; padding: 40px 0; }
+        .msg-count { font-size: 12px; color: #666; }
+        .password-box, .add-user-box, .request-box {
+            background: #2a2a2a;
             padding: 15px;
             border-radius: 8px;
-            border: 1px solid #ffc107;
-            margin: 10px 0;
-        }
-        .password-box input {
-            width: 100%;
-            padding: 12px;
-            margin: 8px 0;
-            border: 1px solid #ced4da;
-            border-radius: 6px;
-            font-size: 16px;
-        }
-        .password-box button {
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            touch-action: manipulation;
-        }
-        .password-box button:active { background: #0056b3; }
-        .contact-section {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #dee2e6;
-            text-align: center;
-        }
-        .contact-section h4 {
-            color: #333;
-            font-size: 16px;
+            border: 1px solid #444;
             margin-bottom: 10px;
-            font-weight: normal;
+            display: none;
         }
-        .social-icons {
+        .password-box input, .add-user-box input, .request-box input {
+            width: 100%;
+            padding: 10px;
+            background: #333;
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 6px;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+        .password-box button, .add-user-box button, .request-box button { padding: 10px 20px; }
+        .request-list {
             display: flex;
-            justify-content: center;
-            gap: 20px;
-            flex-wrap: wrap;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
         }
-        .social-icons a {
-            display: inline-flex;
+        .request-item {
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 6px;
-            color: #555;
-            text-decoration: none;
-            font-size: 14px;
-            transition: color 0.2s;
+            background: #333;
+            padding: 10px 14px;
+            border-radius: 6px;
+            border-left: 3px solid #ffc107;
         }
-        .social-icons a:hover {
-            color: #007bff;
+        .request-item .name { font-weight: bold; color: #fff; }
+        .request-item .time { font-size: 11px; color: #888; }
+        .request-item .actions { display: flex; gap: 6px; }
+        .notification-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #dc3545;
+            margin-left: 5px;
+            animation: pulse 1s infinite;
         }
-        .social-icons svg {
-            width: 22px;
-            height: 22px;
-            fill: currentColor;
-        }
-        .username {
-            color: #6c757d;
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .contact-section {
+            margin-top: 15px;
+            padding-top: 12px;
+            border-top: 1px solid #333;
+            text-align: center;
             font-size: 13px;
-            margin-top: 6px;
         }
-        @media (max-width: 500px) { 
-            .input-group button { width: 100%; } 
-            .item-card { flex-direction: column; align-items: stretch; }
-            .item-card div { display: flex; gap: 5px; }
-            .copy-btn, .delete-btn { flex: 1; text-align: center; }
-            .social-icons { gap: 15px; }
+        .contact-section a {
+            color: #4da6ff;
+            text-decoration: none;
+            margin: 0 8px;
+        }
+        .contact-section a:hover { text-decoration: underline; }
+        @media (max-width: 500px) {
+            .header { flex-direction: column; align-items: stretch; }
+            .user-selector { justify-content: center; }
+            .input-area button { width: 100%; }
+            .chat-box { height: 250px; }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>
-        🔗 Live Links 
-        <span class="auto-tag">
-            <span class="status-dot online" id="statusDot"></span> AUTO
-        </span>
-        <button class="admin-btn" onclick="toggleAdmin()">⚙️ Admin</button>
-    </h1>
-    
-    <!-- Admin Panel -->
-    <div class="admin-panel" id="adminPanel">
-        <h3 style="margin-bottom: 10px;">➕ Add New Item</h3>
-        <p style="color: #6c757d; font-size: 14px; margin-bottom: 15px;">
-            ⚡ Link ya message daalo - auto save ho jayega!
-        </p>
-        
-        <!-- 🔐 Password Box -->
-        <div class="password-box" id="passwordBox">
-            <strong>🔐 Admin Password</strong>
-            <input type="password" id="adminPassword" placeholder="Enter admin password" />
-            <button onclick="verifyPassword()">✅ Verify Password</button>
-        </div>
-        
-        <div id="adminContent" style="display: none;">
-            <div class="input-group">
-                <input type="text" id="linkInput" placeholder="https://example.com या कोई भी message" />
-                <button onclick="addItem()">💾 Save</button>
-            </div>
-            <div id="message" class="message"></div>
-            <p style="font-size: 12px; color: #6c757d; margin-top: 10px;">
-                🗑️ Delete button ab active hai! (Password verify karne ke baad)
-            </p>
+    <!-- Header -->
+    <div class="header">
+        <h1>💬 Live Chat</h1>
+        <div class="header-controls">
+            <button class="btn btn-warning btn-sm" id="requestBtn" onclick="toggleRequest()">📩 Request <span id="requestBadge" style="display:none;" class="notification-dot"></span></button>
+            <button class="btn btn-secondary btn-sm" onclick="toggleAdmin()">🔐 Admin</button>
         </div>
     </div>
 
-    <!-- Items Display -->
-    <div id="linksContainer">
-        <p class="empty-msg">⏳ Loading...</p>
+    <!-- Admin Password Box -->
+    <div class="password-box" id="passwordBox">
+        <strong style="color:#fff;">🔐 Admin Password</strong>
+        <input type="password" id="adminPassword" placeholder="Enter admin password" />
+        <button class="btn btn-primary" onclick="verifyAdmin()">✅ Verify</button>
+        <p style="color:#888; font-size:12px; margin-top:5px;">Default: <strong>admin123</strong></p>
     </div>
 
-    <!-- ========== CONTACT US SECTION ========== -->
+    <!-- Request Box -->
+    <div class="request-box" id="requestBox">
+        <strong style="color:#fff;">📩 Join Request</strong>
+        <p style="color:#888; font-size:12px;">Enter a username to request joining the chat.</p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <input type="text" id="requestName" placeholder="Choose a username (e.g., john)" style="flex:1; min-width:120px;" />
+            <button class="btn btn-primary" onclick="sendRequest()">📤 Send Request</button>
+        </div>
+        <div id="requestStatus" style="margin-top:8px; font-size:13px; color:#888;"></div>
+    </div>
+
+    <!-- Add User Box (Admin Only) -->
+    <div class="add-user-box" id="addUserBox">
+        <strong style="color:#fff;">👥 Manage Users</strong>
+        <div id="pendingRequests" class="request-list"></div>
+        <hr style="border-color:#444; margin:10px 0;">
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
+            <input type="text" id="newUserName" placeholder="Add user manually" style="flex:1; min-width:120px;" />
+            <button class="btn btn-success" onclick="addUserManually()">Add User</button>
+        </div>
+        <div class="user-list" id="userList" style="margin-top:10px; display:flex; flex-wrap:wrap; gap:8px;"></div>
+    </div>
+
+    <!-- User Selector -->
+    <div class="user-selector" id="userSelector">
+        <button class="user-btn admin-user active" data-user="aish" onclick="setUser('aish')">👑 @aish</button>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <span><span class="status-dot online" id="statusDot"></span> <span id="statusText">Connected</span></span>
+        <span class="msg-count" id="msgCount">0 messages</span>
+    </div>
+
+    <!-- Chat Box -->
+    <div class="chat-box" id="chatBox">
+        <p class="empty-msg">💬 No messages yet. Start chatting!</p>
+    </div>
+
+    <!-- Input Area -->
+    <div class="input-area">
+        <input type="text" id="chatInput" placeholder="Type your message..." />
+        <button class="btn btn-success" onclick="sendMessage()">📤 Send</button>
+    </div>
+
+    <!-- Contact -->
     <div class="contact-section">
-        <h4>📬 Contact Us</h4>
-        <div class="social-icons">
-            <!-- Facebook -->
-            <a href="https://facebook.com/yadavaiswary" target="_blank" rel="noopener" aria-label="Facebook">
-                <svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                <span>@yadavaiswary</span>
-            </a>
-            <!-- Instagram -->
-            <a href="https://instagram.com/yadavaiswary" target="_blank" rel="noopener" aria-label="Instagram">
-                <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
-                <span>@yadavaiswary</span>
-            </a>
-            <!-- Twitter / X -->
-            <a href="https://twitter.com/yadavaiswary" target="_blank" rel="noopener" aria-label="Twitter / X">
-                <svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                <span>@yadavaiswary</span>
-            </a>
-        </div>
-        <div class="username">📧 yadavaiswary@example.com</div>
+        <a href="https://facebook.com/yadavaiswary" target="_blank">📘 @yadavaiswary</a>
+        <a href="https://instagram.com/yadavaiswary" target="_blank">📷 @yadavaiswary</a>
+        <a href="https://twitter.com/yadavaiswary" target="_blank">🐦 @yadavaiswary</a>
+        <br>
+        <a href="mailto:queries.aish@gmail.com" style="color:#888; font-size:12px;">📧 queries.aish@gmail.com</a>
     </div>
 </div>
 
 <script>
     // ============================================================
-    // ✅ PERMANENT BIN ID
+    // 🔥 CONFIG
     // ============================================================
     const BIN_ID = '6a9e8273ac6210605aaef916';
-    
-    // 🔐 ADMIN PASSWORD (Yahan apna password daalo)
-    const ADMIN_PASSWORD = 'admin123'; // ⬅️ Isko change kar lo
+    const ADMIN_PASSWORD = 'admin123';
+    const MAX_USERS = 4;
     
     // ============================================================
-    // 🚀 NEEYCHE KUCH NAHI BADALNA
+    // 🚀 CHAT SYSTEM
     // ============================================================
 
-    let currentItems = [];
-    let isSaving = false;
+    let messages = [];
+    let currentUser = 'aish';
     let isAdmin = false;
+    let isSaving = false;
+    let users = ['aish'];
+    let pendingRequests = [];
 
-    // ========== 🔐 PASSWORD VERIFY ==========
-    function verifyPassword() {
+    // ========== 👤 SET USER ==========
+    function setUser(user) {
+        if (!users.includes(user)) {
+            showStatus('❌ User not found!', 'error');
+            return;
+        }
+        currentUser = user;
+        document.querySelectorAll('.user-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.user === user);
+        });
+        document.getElementById('chatInput').placeholder = user === 'aish' ? 'Message as @aish...' : `Message as @${user}...`;
+    }
+
+    // ========== 🔐 ADMIN VERIFY ==========
+    function verifyAdmin() {
         const input = document.getElementById('adminPassword');
-        const password = input.value.trim();
-        
-        if (password === ADMIN_PASSWORD) {
+        if (input.value.trim() === ADMIN_PASSWORD) {
             isAdmin = true;
             document.getElementById('passwordBox').style.display = 'none';
-            document.getElementById('adminContent').style.display = 'block';
-            showMessage('✅ Admin verified! Now you can delete items.', 'success');
+            document.getElementById('addUserBox').style.display = 'block';
+            showStatus('✅ Admin mode ON', 'success');
+            renderUsers();
+            displayMessages();
+            renderRequests();
         } else {
-            showMessage('❌ Wrong password! Try again.', 'error');
+            showStatus('❌ Wrong password!', 'error');
             input.value = '';
         }
     }
 
-    // ========== 📥 FETCH ITEMS ==========
-    async function fetchItems() {
-        showMessage('⏳ Loading...', 'loading');
+    function toggleAdmin() {
+        const box = document.getElementById('passwordBox');
+        const userBox = document.getElementById('addUserBox');
+        if (isAdmin) {
+            isAdmin = false;
+            box.style.display = 'none';
+            userBox.style.display = 'none';
+            showStatus('🔐 Admin mode OFF', 'info');
+            renderUsers();
+            displayMessages();
+        } else {
+            box.style.display = box.style.display === 'none' ? 'block' : 'none';
+            userBox.style.display = 'none';
+            if (box.style.display === 'block') document.getElementById('adminPassword').focus();
+        }
+    }
+
+    // ========== 📩 REQUEST SYSTEM ==========
+    function toggleRequest() {
+        const box = document.getElementById('requestBox');
+        box.style.display = box.style.display === 'none' ? 'block' : 'none';
+        if (box.style.display === 'block') document.getElementById('requestName').focus();
+    }
+
+    async function sendRequest() {
+        const input = document.getElementById('requestName');
+        const name = input.value.trim().toLowerCase();
+        if (!name) return document.getElementById('requestStatus').textContent = '❌ Please enter a username!';
+        if (name === 'aish') return document.getElementById('requestStatus').textContent = '❌ "aish" is reserved!';
+        if (users.includes(name)) return document.getElementById('requestStatus').textContent = '❌ User already exists!';
+        if (pendingRequests.some(r => r.name === name)) return document.getElementById('requestStatus').textContent = '⏳ Request already sent!';
         
+        const newRequest = {
+            id: 'req_' + Date.now(),
+            name: name,
+            timestamp: new Date().toISOString(),
+            status: 'pending'
+        };
+        
+        pendingRequests.push(newRequest);
+        await saveRequests();
+        input.value = '';
+        document.getElementById('requestStatus').textContent = '✅ Request sent! Waiting for admin approval.';
+        document.getElementById('requestStatus').style.color = '#28a745';
+        
+        // Show badge on request button
+        document.getElementById('requestBadge').style.display = 'inline-block';
+        
+        // If admin is logged in, show immediately
+        if (isAdmin) renderRequests();
+    }
+
+    async function approveRequest(id) {
+        if (!isAdmin) return showStatus('❌ Admin login required!', 'error');
+        const request = pendingRequests.find(r => r.id === id);
+        if (!request) return;
+        if (users.length >= MAX_USERS + 1) {
+            showStatus(`❌ Max ${MAX_USERS} users allowed!`, 'error');
+            return;
+        }
+        
+        users.push(request.name);
+        pendingRequests = pendingRequests.filter(r => r.id !== id);
+        await saveRequests();
+        await saveUsers();
+        renderUsers();
+        renderRequests();
+        showStatus(`✅ @${request.name} added!`, 'success');
+        document.getElementById('requestBadge').style.display = pendingRequests.length > 0 ? 'inline-block' : 'none';
+    }
+
+    async function rejectRequest(id) {
+        if (!isAdmin) return showStatus('❌ Admin login required!', 'error');
+        pendingRequests = pendingRequests.filter(r => r.id !== id);
+        await saveRequests();
+        renderRequests();
+        document.getElementById('requestBadge').style.display = pendingRequests.length > 0 ? 'inline-block' : 'none';
+        showStatus('🗑️ Request rejected', 'info');
+    }
+
+    function renderRequests() {
+        const container = document.getElementById('pendingRequests');
+        if (!isAdmin) {
+            container.innerHTML = '<p style="color:#888; font-size:13px;">🔐 Admin login to manage requests.</p>';
+            return;
+        }
+        if (pendingRequests.length === 0) {
+            container.innerHTML = '<p style="color:#888; font-size:13px;">✅ No pending requests.</p>';
+            return;
+        }
+        container.innerHTML = pendingRequests.map(r => `
+            <div class="request-item">
+                <div>
+                    <span class="name">@${r.name}</span>
+                    <span class="time">${new Date(r.timestamp).toLocaleString()}</span>
+                </div>
+                <div class="actions">
+                    <button class="btn btn-success btn-sm" onclick="approveRequest('${r.id}')">✅ Approve</button>
+                    <button class="btn btn-danger btn-sm" onclick="rejectRequest('${r.id}')">❌ Reject</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // ========== 👥 USER MANAGEMENT ==========
+    function renderUsers() {
+        const selector = document.getElementById('userSelector');
+        selector.innerHTML = users.map(u => {
+            const isAdminUser = u === 'aish';
+            const active = u === currentUser ? 'active' : '';
+            return `<button class="user-btn ${isAdminUser ? 'admin-user' : ''} ${active}" data-user="${u}" onclick="setUser('${u}')">${isAdminUser ? '👑 ' : ''}@${u}</button>`;
+        }).join('');
+
+        const list = document.getElementById('userList');
+        if (isAdmin) {
+            list.innerHTML = users.map(u => {
+                if (u === 'aish') return `<span class="user-tag" style="background:#333;padding:4px 12px;border-radius:20px;border:1px solid #dc3545;">👑 @aish</span>`;
+                return `<span class="user-tag" style="background:#333;padding:4px 12px;border-radius:20px;border:1px solid #555;">@${u} <button class="remove-btn" style="background:none;border:none;color:#dc3545;cursor:pointer;margin-left:6px;font-size:14px;" onclick="removeUser('${u}')">✕</button></span>`;
+            }).join('');
+        } else {
+            list.innerHTML = users.map(u => {
+                if (u === 'aish') return `<span class="user-tag" style="background:#333;padding:4px 12px;border-radius:20px;border:1px solid #dc3545;">👑 @aish</span>`;
+                return `<span class="user-tag" style="background:#333;padding:4px 12px;border-radius:20px;border:1px solid #555;">@${u}</span>`;
+            }).join('');
+        }
+    }
+
+    async function addUserManually() {
+        if (!isAdmin) return showStatus('❌ Admin login required!', 'error');
+        const input = document.getElementById('newUserName');
+        const name = input.value.trim().toLowerCase();
+        if (!name) return showStatus('Please enter a username!', 'error');
+        if (name === 'aish') return showStatus('❌ "aish" is reserved!', 'error');
+        if (users.includes(name)) return showStatus('❌ User already exists!', 'error');
+        if (users.length >= MAX_USERS + 1) return showStatus(`❌ Max ${MAX_USERS} users allowed!`, 'error');
+        
+        users.push(name);
+        input.value = '';
+        showStatus(`✅ @${name} added!`, 'success');
+        await saveUsers();
+        renderUsers();
+    }
+
+    async function removeUser(user) {
+        if (!isAdmin) return;
+        if (user === 'aish') return showStatus('❌ Cannot remove admin!', 'error');
+        if (!confirm(`Remove @${user}?`)) return;
+        users = users.filter(u => u !== user);
+        if (currentUser === user) setUser('aish');
+        showStatus(`🗑️ @${user} removed`, 'success');
+        await saveUsers();
+        renderUsers();
+    }
+
+    // ========== 💾 SAVE DATA ==========
+    async function saveUsers() {
+        try {
+            const systemMsg = messages.find(m => m.isSystem);
+            const updated = messages.filter(m => !m.isSystem);
+            const newSystem = {
+                id: 'system_users_' + Date.now(),
+                user: 'system',
+                text: JSON.stringify({ users: users }),
+                timestamp: new Date().toISOString(),
+                isSystem: true
+            };
+            updated.push(newSystem);
+            const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ messages: updated })
+            });
+            if (!res.ok) throw new Error('Failed to save users');
+            messages = updated;
+        } catch (error) {
+            console.error('Save users error:', error);
+        }
+    }
+
+    async function saveRequests() {
+        try {
+            const reqMsg = messages.find(m => m.isRequest);
+            const updated = messages.filter(m => !m.isRequest && !m.isSystem);
+            const newReq = {
+                id: 'requests_' + Date.now(),
+                user: 'system',
+                text: JSON.stringify({ requests: pendingRequests }),
+                timestamp: new Date().toISOString(),
+                isRequest: true
+            };
+            updated.push(newReq);
+            // Also keep system message
+            const sysMsg = messages.find(m => m.isSystem);
+            if (sysMsg) updated.push(sysMsg);
+            
+            const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ messages: updated })
+            });
+            if (!res.ok) throw new Error('Failed to save requests');
+            messages = updated;
+        } catch (error) {
+            console.error('Save requests error:', error);
+        }
+    }
+
+    // ========== 📥 FETCH MESSAGES ==========
+    async function fetchMessages() {
         try {
             const url = `https://api.jsonbin.io/v3/b/${BIN_ID}/latest`;
-            const response = await fetch(url);
+            const res = await fetch(url);
+            if (!res.ok) throw new Error('Failed to fetch');
+            const data = await res.json();
+            messages = data.record.messages || [];
             
-            if (!response.ok) {
-                if (response.status === 404) {
-                    showMessage('❌ Bin not found!', 'error');
-                    return;
-                }
-                throw new Error(`HTTP ${response.status}`);
+            // Load users
+            const sysMsg = messages.find(m => m.isSystem);
+            if (sysMsg) {
+                try {
+                    const saved = JSON.parse(sysMsg.text);
+                    if (saved.users && saved.users.length > 0) users = saved.users;
+                } catch (e) {}
             }
             
-            const data = await response.json();
-            currentItems = data.record.links || [];
+            // Load requests
+            const reqMsg = messages.find(m => m.isRequest);
+            if (reqMsg) {
+                try {
+                    const saved = JSON.parse(reqMsg.text);
+                    if (saved.requests) pendingRequests = saved.requests;
+                } catch (e) {}
+            }
             
-            currentItems = currentItems.filter(item => 
-                item && typeof item === 'string' && item.trim() !== ''
-            );
-                
-            displayItems();
+            // Show badge if pending requests
+            document.getElementById('requestBadge').style.display = pendingRequests.length > 0 ? 'inline-block' : 'none';
+            
+            displayMessages();
+            renderUsers();
+            if (isAdmin) renderRequests();
             updateStatus(true);
-            showMessage(`✅ ${currentItems.length} items loaded`, 'success');
-            
+            document.getElementById('msgCount').textContent = `${messages.filter(m => !m.isSystem && !m.isRequest).length} messages`;
         } catch (error) {
-            console.error('Fetch error:', error);
             updateStatus(false);
-            showMessage('❌ Error: ' + error.message, 'error');
+            console.error('Fetch error:', error);
         }
     }
 
-    // ========== 💾 SAVE ITEM ==========
-    async function addItem() {
+    // ========== 📤 SEND MESSAGE ==========
+    async function sendMessage() {
+        const input = document.getElementById('chatInput');
+        const text = input.value.trim();
+        if (!text) return showStatus('Please type something!', 'error');
         if (isSaving) return;
-        
-        const input = document.getElementById('linkInput');
-        const newItem = input.value.trim();
-        
-        if (!newItem) {
-            showMessage('Please enter something!', 'error');
-            return;
-        }
-        
-        if (currentItems.includes(newItem)) {
-            showMessage('⚠️ Already exists!', 'error');
-            return;
-        }
-        
+
+        const newMsg = {
+            id: Date.now().toString(),
+            user: currentUser,
+            text: text,
+            timestamp: new Date().toISOString()
+        };
+
         isSaving = true;
-        showMessage('⏳ Saving...', 'loading');
-        
+        showStatus('⏳ Sending...', 'loading');
+
         try {
-            const updatedItems = [...currentItems, newItem];
+            const updated = messages.filter(m => !m.isSystem && !m.isRequest);
+            // Add system messages back
+            const sysMsg = messages.find(m => m.isSystem);
+            if (sysMsg) updated.push(sysMsg);
+            const reqMsg = messages.find(m => m.isRequest);
+            if (reqMsg) updated.push(reqMsg);
+            updated.push(newMsg);
             
-            const updateUrl = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
-            const updateResponse = await fetch(updateUrl, {
+            const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ links: updatedItems })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ messages: updated })
             });
-            
-            if (!updateResponse.ok) {
-                throw new Error('Failed to update bin');
-            }
-            
-            currentItems = updatedItems;
-            displayItems();
+            if (!res.ok) throw new Error('Failed to send');
+            messages = updated;
             input.value = '';
-            showMessage('✅ Saved! Visible on all devices.', 'success');
-            
+            displayMessages();
+            showStatus('✅ Message sent!', 'success');
+            document.getElementById('msgCount').textContent = `${messages.filter(m => !m.isSystem && !m.isRequest).length} messages`;
         } catch (error) {
-            showMessage('❌ Failed: ' + error.message, 'error');
-        } finally {
-            isSaving = false;
-        }
+            showStatus('❌ Error: ' + error.message, 'error');
+        } finally { isSaving = false; }
     }
 
-    // ========== 🗑️ DELETE ITEM ==========
-    async function deleteItem(itemToDelete) {
-        if (!isAdmin) {
-            showMessage('❌ Admin password verify karo pehle!', 'error');
-            document.getElementById('passwordBox').style.display = 'block';
-            return;
-        }
-        
-        if (!confirm(`Delete: ${itemToDelete}?`)) return;
-        
+    // ========== 🗑️ DELETE MESSAGE ==========
+    async function deleteMessage(id) {
+        if (!isAdmin) return showStatus('❌ Admin login required!', 'error');
+        if (!confirm('Delete this message?')) return;
         if (isSaving) return;
+
         isSaving = true;
-        showMessage('⏳ Deleting...', 'loading');
-        
+        showStatus('⏳ Deleting...', 'loading');
+
         try {
-            const updatedItems = currentItems.filter(item => item !== itemToDelete);
-            
-            const updateUrl = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
-            const updateResponse = await fetch(updateUrl, {
+            const updated = messages.filter(m => m.id !== id);
+            const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ links: updatedItems })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ messages: updated })
             });
-            
-            if (!updateResponse.ok) {
-                throw new Error('Failed to update bin');
-            }
-            
-            currentItems = updatedItems;
-            displayItems();
-            showMessage('🗑️ Item deleted!', 'success');
-            
+            if (!res.ok) throw new Error('Failed to delete');
+            messages = updated;
+            displayMessages();
+            showStatus('🗑️ Message deleted!', 'success');
+            document.getElementById('msgCount').textContent = `${messages.filter(m => !m.isSystem && !m.isRequest).length} messages`;
         } catch (error) {
-            showMessage('❌ Delete failed: ' + error.message, 'error');
-        } finally {
-            isSaving = false;
-        }
+            showStatus('❌ Delete failed: ' + error.message, 'error');
+        } finally { isSaving = false; }
     }
 
-    // ========== 📋 COPY ITEM ==========
-    function copyItem(item) {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(item).then(() => {
-                showMessage('✅ Copied: ' + item, 'success');
-            }).catch(() => {
-                fallbackCopy(item);
-            });
-        } else {
-            fallbackCopy(item);
-        }
-    }
-
-    function fallbackCopy(item) {
-        const textarea = document.createElement('textarea');
-        textarea.value = item;
-        textarea.style.position = 'fixed';
-        textarea.style.left = '-9999px';
-        document.body.appendChild(textarea);
-        textarea.select();
-        try {
-            document.execCommand('copy');
-            showMessage('✅ Copied!', 'success');
-        } catch (e) {
-            showMessage('❌ Copy failed. Please copy manually.', 'error');
-        }
-        document.body.removeChild(textarea);
-    }
-
-    // ========== 🖥️ DISPLAY ITEMS ==========
-    function displayItems() {
-        const container = document.getElementById('linksContainer');
+    // ========== 🖥️ DISPLAY MESSAGES ==========
+    function displayMessages() {
+        const box = document.getElementById('chatBox');
+        const displayMsgs = messages.filter(m => !m.isSystem && !m.isRequest);
         
-        if (!currentItems || currentItems.length === 0) {
-            container.innerHTML = '<p class="empty-msg">📭 No items yet. Click "Admin" to add.</p>';
+        if (displayMsgs.length === 0) {
+            box.innerHTML = '<p class="empty-msg">💬 No messages yet. Start chatting!</p>';
             return;
         }
-        
-        container.innerHTML = currentItems.map(item => {
-            const isUrl = item.startsWith('http://') || item.startsWith('https://');
-            const escapedItem = item.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+        box.innerHTML = displayMsgs.map(msg => {
+            const isAish = msg.user === 'aish';
+            const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const escapedText = msg.text.replace(/'/g, "\\'").replace(/"/g, '&quot;');
             
+            const isLink = msg.text.startsWith('http://') || msg.text.startsWith('https://');
+            const displayText = isLink ? `<a href="${msg.text}" target="_blank" style="color:inherit;text-decoration:underline;">${msg.text}</a>` : msg.text;
+
+            let userClass = 'user1';
+            if (msg.user === 'aish') userClass = 'aish';
+            else if (msg.user === 'user1') userClass = 'user1';
+            else if (msg.user === 'user2') userClass = 'user2';
+            else if (msg.user === 'user3') userClass = 'user3';
+            else if (msg.user === 'user4') userClass = 'user4';
+            else userClass = 'user1';
+
             return `
-                <div class="item-card">
-                    <div class="content">
-                        ${isUrl ? `<a href="${item}" target="_blank" rel="noopener">${item}</a>` : item}
-                        ${isUrl ? '<span class="badge link">Link</span>' : '<span class="badge text">Text</span>'}
-                    </div>
-                    <div>
-                        <button class="copy-btn" onclick="copyItem('${escapedItem}')">📋 Copy</button>
-                        ${isAdmin ? `<button class="delete-btn" onclick="deleteItem('${escapedItem}')">🗑️</button>` : ''}
+                <div class="msg ${userClass}">
+                    <div class="sender">${isAish ? '👑 @aish' : `@${msg.user}`}</div>
+                    <div>${displayText}</div>
+                    <div class="time">
+                        ${time}
+                        ${isAdmin ? `<button class="delete-btn" onclick="deleteMessage('${msg.id}')">🗑️</button>` : ''}
                     </div>
                 </div>
             `;
         }).join('');
+
+        box.scrollTop = box.scrollHeight;
     }
 
-    // ========== 💬 SHOW MESSAGE ==========
-    function showMessage(text, type) {
-        const msgDiv = document.getElementById('message');
-        msgDiv.innerHTML = text;
-        msgDiv.className = 'message ' + type;
+    // ========== 💬 SHOW STATUS ==========
+    function showStatus(text, type) {
+        const el = document.getElementById('statusText');
+        el.textContent = text;
+        if (type === 'success') el.style.color = '#28a745';
+        else if (type === 'error') el.style.color = '#dc3545';
+        else if (type === 'loading') el.style.color = '#ffc107';
+        else el.style.color = '#888';
         if (type !== 'loading') {
             setTimeout(() => {
-                msgDiv.className = 'message';
-                msgDiv.innerHTML = '';
+                el.textContent = 'Connected';
+                el.style.color = '#888';
             }, 4000);
         }
     }
@@ -527,24 +739,16 @@
     function updateStatus(online) {
         const dot = document.getElementById('statusDot');
         dot.className = 'status-dot ' + (online ? 'online' : 'offline');
-    }
-
-    // ========== ⚙️ TOGGLE ADMIN ==========
-    function toggleAdmin() {
-        const panel = document.getElementById('adminPanel');
-        panel.classList.toggle('show');
-        if (panel.classList.contains('show')) {
-            document.getElementById('linkInput').focus();
-            isAdmin = false;
-            document.getElementById('passwordBox').style.display = 'block';
-            document.getElementById('adminContent').style.display = 'none';
-            document.getElementById('adminPassword').value = '';
-        }
+        document.getElementById('statusText').textContent = online ? 'Connected' : 'Disconnected';
     }
 
     // ========== 🚀 INIT ==========
-    fetchItems();
-    setInterval(fetchItems, 15000);
+    fetchMessages();
+    setInterval(fetchMessages, 5000);
+
+    document.getElementById('chatInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
 </script>
 
 </body>
