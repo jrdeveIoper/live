@@ -66,6 +66,8 @@
         .header-controls .btn:hover { background: #3a3a3a; color: #fff; }
         .header-controls .btn-warning { background: #fffc00; color: #000; }
         .header-controls .btn-warning:hover { background: #e6e600; }
+        .header-controls .btn-danger { background: #ff3b30; color: #fff; }
+        .header-controls .btn-danger:hover { background: #e0352b; }
         .notification-dot {
             display: inline-block;
             width: 8px;
@@ -136,21 +138,18 @@
         }
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
 
-        /* Sender (admin) - left side */
         .msg.aish {
             background: #007aff;
             color: #fff;
             align-self: flex-start;
             border-bottom-left-radius: 4px;
         }
-        /* Receiver (user) - right side */
         .msg.user1 {
             background: #2c2c2e;
             color: #fff;
             align-self: flex-end;
             border-bottom-right-radius: 4px;
         }
-        /* System messages */
         .msg.system {
             background: transparent;
             color: #555;
@@ -288,6 +287,7 @@
         .popup-box .btn-success { background: #34c759; color: #fff; }
         .popup-box .btn-danger { background: #ff3b30; color: #fff; }
         .popup-box .btn-secondary { background: #2a2a2a; color: #aaa; }
+        .popup-box .btn-warning { background: #fffc00; color: #000; }
         .request-item {
             display: flex;
             justify-content: space-between;
@@ -301,6 +301,27 @@
         .request-item .id { font-size: 10px; color: #666; margin-left: 6px; }
         .request-item .time { font-size: 10px; color: #555; }
         .request-item .actions { display: flex; gap: 4px; }
+
+        /* ========== STATUS BAR ========== */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 14px;
+            background: #121212;
+            font-size: 11px;
+            color: #555;
+            border-bottom: 1px solid #2a2a2a;
+            flex-shrink: 0;
+        }
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 4px;
+        }
+        .status-dot.online { background: #34c759; }
+        .status-dot.offline { background: #ff3b30; }
 
         /* ========== CONTACT ========== */
         .contact-section {
@@ -353,10 +374,14 @@
 
     <!-- ========== ADMIN PASSWORD POPUP ========== -->
     <div class="popup-box" id="passwordBox">
-        <strong>🔐 Admin Password</strong>
+        <strong>🔐 Admin Panel</strong>
         <p>Default: <strong>admin123</strong></p>
         <input type="password" id="adminPassword" placeholder="Enter admin password..." />
         <button class="btn btn-primary" onclick="verifyAdmin()">✅ Verify</button>
+        <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn btn-danger" onclick="deleteAllMessages()" id="deleteAllBtn" style="display:none;">🗑️ Delete All Messages</button>
+        </div>
+        <div id="adminStatus" style="margin-top:6px; font-size:12px; color:#888;"></div>
     </div>
 
     <!-- ========== REQUEST POPUP ========== -->
@@ -375,6 +400,12 @@
     <!-- ========== USER SELECTOR ========== -->
     <div class="user-selector" id="userSelector">
         <button class="user-btn admin-user active" data-user="aish" onclick="setUser('aish')">👑 @aish</button>
+    </div>
+
+    <!-- ========== STATUS BAR ========== -->
+    <div class="status-bar">
+        <span><span class="status-dot online" id="statusDot"></span> <span id="statusText">Connected</span></span>
+        <span id="msgCount">0 messages</span>
     </div>
 
     <!-- ========== CHAT BOX ========== -->
@@ -532,7 +563,6 @@
             btn.classList.toggle('active', btn.dataset.user === user);
         });
         document.getElementById('chatInput').placeholder = user === 'aish' ? 'Message as @aish...' : `Message as @${user}...`;
-        // Enable/disable input based on approval
         if (user !== 'aish' && !chatEnabled) {
             document.getElementById('chatInput').disabled = true;
             document.getElementById('chatInput').placeholder = '⏳ Wait for admin approval...';
@@ -547,11 +577,15 @@
         if (input.value.trim() === ADMIN_PASSWORD) {
             isAdmin = true;
             document.getElementById('passwordBox').classList.remove('show');
+            document.getElementById('deleteAllBtn').style.display = 'inline-block';
+            document.getElementById('adminStatus').textContent = '✅ Admin verified! Delete buttons active.';
+            document.getElementById('adminStatus').style.color = '#34c759';
             showStatus('✅ Admin mode ON', 'success');
             renderRequests();
             displayMessages();
         } else {
-            showStatus('❌ Wrong password!', 'error');
+            document.getElementById('adminStatus').textContent = '❌ Wrong password!';
+            document.getElementById('adminStatus').style.color = '#ff3b30';
             input.value = '';
         }
     }
@@ -561,12 +595,51 @@
         if (isAdmin) {
             isAdmin = false;
             box.classList.remove('show');
+            document.getElementById('deleteAllBtn').style.display = 'none';
+            document.getElementById('adminStatus').textContent = '';
             showStatus('🔐 Admin mode OFF', 'info');
             displayMessages();
         } else {
             box.classList.toggle('show');
-            if (box.classList.contains('show')) document.getElementById('adminPassword').focus();
+            if (box.classList.contains('show')) {
+                document.getElementById('adminPassword').focus();
+                document.getElementById('adminStatus').textContent = '';
+            }
         }
+    }
+
+    // ========== 🗑️ DELETE ALL MESSAGES ==========
+    async function deleteAllMessages() {
+        if (!isAdmin) {
+            showStatus('❌ Admin login required!', 'error');
+            return;
+        }
+        const msgCount = messages.filter(m => !m.isSystem && !m.isRequest).length;
+        if (msgCount === 0) {
+            showStatus('💬 No messages to delete!', 'info');
+            return;
+        }
+        if (!confirm(`Delete all ${msgCount} messages? This cannot be undone!`)) return;
+        if (isSaving) return;
+
+        isSaving = true;
+        showStatus('⏳ Deleting all messages...', 'loading');
+
+        try {
+            // Keep only system messages and requests
+            const keepMessages = messages.filter(m => m.isSystem || m.isRequest);
+            const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ messages: keepMessages })
+            });
+            if (!res.ok) throw new Error('Failed to delete all');
+            messages = keepMessages;
+            await displayMessages();
+            showStatus(`🗑️ ${msgCount} messages deleted!`, 'success');
+        } catch (error) {
+            showStatus('❌ Delete all failed: ' + error.message, 'error');
+        } finally { isSaving = false; }
     }
 
     // ========== 📩 REQUEST ==========
@@ -792,158 +865,4 @@
             id: Date.now().toString(),
             user: currentUser,
             text: encrypted.encrypted,
-            iv: encrypted.iv,
-            encrypted: true,
-            timestamp: new Date().toISOString()
-        };
-
-        isSaving = true;
-        showStatus('⏳ Sending...', 'loading');
-
-        try {
-            const updated = messages.filter(m => !m.isSystem && !m.isRequest);
-            const sysMsg = messages.find(m => m.isSystem);
-            if (sysMsg) updated.push(sysMsg);
-            const reqMsg = messages.find(m => m.isRequest);
-            if (reqMsg) updated.push(reqMsg);
-            updated.push(newMsg);
-            
-            const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messages: updated })
-            });
-            if (!res.ok) throw new Error('Failed to send');
-            messages = updated;
-            input.value = '';
-            await displayMessages();
-            showStatus('✅ Message sent (E2EE)!', 'success');
-        } catch (error) {
-            showStatus('❌ Error: ' + error.message, 'error');
-        } finally { isSaving = false; }
-    }
-
-    // ========== 🗑️ DELETE ==========
-    async function deleteMessage(id) {
-        if (!isAdmin) return showStatus('❌ Admin login required!', 'error');
-        if (!confirm('Delete this message?')) return;
-        if (isSaving) return;
-        isSaving = true;
-        showStatus('⏳ Deleting...', 'loading');
-        try {
-            const updated = messages.filter(m => m.id !== id);
-            const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messages: updated })
-            });
-            if (!res.ok) throw new Error('Failed to delete');
-            messages = updated;
-            await displayMessages();
-            showStatus('🗑️ Message deleted!', 'success');
-        } catch (error) {
-            showStatus('❌ Delete failed: ' + error.message, 'error');
-        } finally { isSaving = false; }
-    }
-
-    // ========== 🖥️ DISPLAY ==========
-    async function displayMessages() {
-        const box = document.getElementById('chatBox');
-        const displayMsgs = messages.filter(m => !m.isSystem && !m.isRequest);
-        if (displayMsgs.length === 0) {
-            box.innerHTML = '<div class="msg system">💬 No messages yet. Start chatting!</div>';
-            return;
-        }
-        
-        let html = '';
-        for (const msg of displayMsgs) {
-            const isAish = msg.user === 'aish';
-            const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            const userClass = isAish ? 'aish' : 'user1';
-            const senderName = isAish ? 'aish' : msg.user;
-            const senderDisplay = isAish ? '👑 @aish' : `@${msg.user}`;
-            
-            let displayText = msg.text;
-            let isEncrypted = false;
-            if (msg.encrypted && msg.iv) {
-                isEncrypted = true;
-                displayText = await decryptMessage(msg.text, msg.iv);
-            }
-            
-            const isLink = displayText.startsWith('http://') || displayText.startsWith('https://');
-            const formattedText = isLink ? `<a href="${displayText}" target="_blank">${displayText}</a>` : displayText;
-            const e2eeBadge = isEncrypted ? '<span class="e2ee-badge">🔒</span>' : '';
-            
-            html += `
-                <div class="msg ${userClass}">
-                    <div class="sender">${senderDisplay} ${isAish ? '<span class="admin-badge">Admin</span>' : ''}</div>
-                    <div class="text-content">${formattedText} ${e2eeBadge}</div>
-                    <div class="time-row">
-                        ${time}
-                        ${isAdmin ? `<button class="delete-btn" onclick="deleteMessage('${msg.id}')">✕</button>` : ''}
-                    </div>
-                </div>
-            `;
-        }
-        box.innerHTML = html;
-        box.scrollTop = box.scrollHeight;
-    }
-
-    // ========== 💬 STATUS ==========
-    function showStatus(text, type) {
-        const el = document.getElementById('statusText');
-        if (!el) return;
-        el.textContent = text;
-        el.style.color = type === 'success' ? '#34c759' : type === 'error' ? '#ff3b30' : type === 'loading' ? '#fffc00' : '#888';
-        if (type !== 'loading') setTimeout(() => { el.textContent = 'Connected'; el.style.color = '#888'; }, 4000);
-    }
-
-    function updateStatus(online) {
-        const dot = document.getElementById('statusDot');
-        if (!dot) return;
-        dot.className = 'status-dot ' + (online ? 'online' : 'offline');
-        const el = document.getElementById('statusText');
-        if (el) el.textContent = online ? 'Connected' : 'Disconnected';
-    }
-
-    // ========== 🚀 INIT ==========
-    async function init() {
-        myUniqueId = await getUniqueId();
-        console.log('🆔 Your Unique ID:', myUniqueId);
-        if (encryptionKey) {
-            document.getElementById('encryptBox').classList.remove('show');
-        } else {
-            document.getElementById('encryptBox').classList.add('show');
-        }
-        // Add status bar if missing (added dynamically)
-        const statusBar = document.createElement('div');
-        statusBar.className = 'status-bar';
-        statusBar.style.cssText = 'display:flex;justify-content:space-between;padding:4px 14px;background:#121212;font-size:11px;color:#555;border-bottom:1px solid #2a2a2a;flex-shrink:0;';
-        statusBar.innerHTML = `<span><span class="status-dot online" id="statusDot"></span> <span id="statusText">Connected</span></span><span id="msgCount">0 messages</span>`;
-        const chatBox = document.getElementById('chatBox');
-        chatBox.parentNode.insertBefore(statusBar, chatBox);
-        
-        fetchMessages();
-        setInterval(fetchMessages, 5000);
-        if (currentUser !== 'aish') {
-            document.getElementById('chatInput').disabled = true;
-            document.getElementById('chatInput').placeholder = '⏳ Wait for admin approval...';
-        }
-    }
-
-    document.getElementById('chatInput').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') sendMessage();
-    });
-
-    // Fix for msgCount update
-    const origDisplay = displayMessages;
-    displayMessages = async function() {
-        await origDisplay();
-        const count = document.getElementById('msgCount');
-        if (count) count.textContent = `${messages.filter(m => !m.isSystem && !m.isRequest).length} messages`;
-    };
-
-    init();
-</script>
-</body>
-</html>
+            iv: encrypted
