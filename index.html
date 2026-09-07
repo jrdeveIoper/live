@@ -36,6 +36,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .header-controls{display:flex;gap:5px;flex-wrap:wrap}
 .header-controls .btn{background:#2a2a2a;border:none;color:#aaa;padding:4px 10px;border-radius:20px;font-size:11px;cursor:pointer;transition:.2s}
 .header-controls .btn:hover{background:#3a3a3a;color:#fff}
+.header-controls .btn-warning{background:#fffc00;color:#000}
+.header-controls .btn-warning:hover{background:#e6e600}
 .header-controls .btn-logout{background:#ff3b30;color:#fff}
 .header-controls .btn-logout:hover{background:#e0352b}
 .user-selector{display:flex;gap:5px;padding:6px 12px;background:#1a1a1a;border-bottom:1px solid #2a2a2a;flex-shrink:0;overflow-x:auto;flex-wrap:nowrap}
@@ -90,6 +92,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .popup-box .btn-danger{background:#ff3b30;color:#fff}
 .popup-box .btn-broadcast{background:#8b5cf6;color:#fff}
 .popup-box .btn-broadcast:hover{background:#7c3aed}
+.popup-box .btn-outline{background:transparent;border:1px solid #555;color:#aaa}
+.key-hint{font-size:11px;color:#666;margin-top:4px;padding:6px 10px;background:#1a1a1a;border-radius:12px;border:1px dashed #333}
+.key-hint strong{color:#fffc00}
+.key-required-banner{background:#2a1a1a;border:1px solid #ff3b30;color:#ff6b6b;padding:20px;text-align:center;border-radius:16px;margin:20px 0}
+.key-required-banner strong{color:#fffc00;font-size:18px}
 .request-item{display:flex;justify-content:space-between;align-items:center;background:#2a2a2a;padding:6px 10px;border-radius:16px;margin-bottom:4px}
 .request-item .name{font-weight:600;color:#fff;font-size:12px}
 .request-item .id{font-size:9px;color:#666;margin-left:6px}
@@ -123,11 +130,28 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <div class="header">
             <h1>💬 <span>Use</span>case</h1>
             <div class="header-controls">
+                <button class="btn btn-warning" onclick="toggleEncrypt()">🔑</button>
                 <button class="btn btn-broadcast" onclick="toggleBroadcast()">📢</button>
                 <button class="btn" onclick="toggleRequest()">📩<span id="requestBadge" style="display:none" class="notification-dot"></span></button>
                 <button class="btn" onclick="toggleAdmin()">🔐</button>
                 <button class="btn btn-logout" onclick="logout()">🚪</button>
             </div>
+        </div>
+
+        <!-- Encryption Key Box -->
+        <div class="popup-box" id="encryptBox">
+            <strong>🔑 Encryption Key</strong>
+            <p>Set a secret key to encrypt messages. <strong>Don't forget it!</strong></p>
+            <input type="password" id="encryptKeyInput" placeholder="Enter encryption key..." />
+            <input type="text" id="encryptHintInput" placeholder="Hint (optional)" style="margin-top:4px" />
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
+                <button class="btn btn-primary" onclick="setEncryptionKey()">🔐 Set Key</button>
+                <button class="btn btn-outline" onclick="exportKey()">💾 Export</button>
+                <button class="btn btn-outline" onclick="document.getElementById('importKeyInput').click()">📂 Import</button>
+                <input type="file" id="importKeyInput" accept=".json" style="display:none" onchange="importKey(event)" />
+            </div>
+            <div id="encryptStatus" style="margin-top:4px;font-size:11px;color:#888"></div>
+            <div id="keyHintDisplay" class="key-hint" style="display:none"></div>
         </div>
 
         <!-- Broadcast Box -->
@@ -194,31 +218,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 </div>
 
 <script>
-// ========== JSONBIN SAVE FIX ==========
+// ========== JSONBIN SAVE ==========
 const BIN = '6a9e8273ac6210605aaef916';
-const MASTER_KEY = '$2a$10$NkGvPqQvMkYMYqXqXqXqXq'; // Dummy - JSONBin free doesn't need master key
 
-// ========== AUTH SYSTEM ==========
-let authMode = 'login';
-let loggedInUser = null;
-let currentUsers = [];
-
-// ========== SAVE TO JSONBIN (FIXED) ==========
 async function saveToJSONBin(data) {
     try {
         const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN}`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
         if (!response.ok) {
             const errorText = await response.text();
             throw new Error(`HTTP ${response.status}: ${errorText}`);
         }
-        const result = await response.json();
-        console.log('✅ Saved successfully:', result);
+        console.log('✅ Saved successfully');
         return true;
     } catch (error) {
         console.error('❌ Save error:', error);
@@ -226,13 +240,11 @@ async function saveToJSONBin(data) {
     }
 }
 
-// ========== LOAD FROM JSONBIN ==========
 async function loadFromJSONBin() {
     try {
         const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN}/latest`);
         if (!response.ok) {
             if (response.status === 404) {
-                // Bin doesn't exist, create default data
                 const defaultData = {
                     users: [{ username: 'aish', password: 'admin123', displayName: 'aish', isAdmin: true }],
                     messages: []
@@ -246,7 +258,6 @@ async function loadFromJSONBin() {
         return data.record || { users: [], messages: [] };
     } catch (error) {
         console.error('❌ Load error:', error);
-        // Return default data on error
         return {
             users: [{ username: 'aish', password: 'admin123', displayName: 'aish', isAdmin: true }],
             messages: []
@@ -254,7 +265,11 @@ async function loadFromJSONBin() {
     }
 }
 
-// ========== LOAD USERS ==========
+// ========== AUTH SYSTEM ==========
+let authMode = 'login';
+let loggedInUser = null;
+let currentUsers = [];
+
 async function loadUsers() {
     const data = await loadFromJSONBin();
     currentUsers = data.users || [];
@@ -265,14 +280,12 @@ async function loadUsers() {
     return currentUsers;
 }
 
-// ========== SAVE USERS ==========
 async function saveUsers() {
     const data = await loadFromJSONBin();
     data.users = currentUsers;
     return await saveToJSONBin(data);
 }
 
-// ========== AUTH UI ==========
 function toggleAuthMode() {
     if (authMode === 'login') {
         authMode = 'register';
@@ -307,7 +320,6 @@ async function handleAuth() {
     await loadUsers();
 
     if (authMode === 'register') {
-        // Validate username: only letters, numbers, no spaces, no special chars
         if (!/^[a-zA-Z0-9]+$/.test(username)) {
             errorEl.textContent = 'Username: letters/numbers only, no spaces/special chars!';
             return;
@@ -320,7 +332,6 @@ async function handleAuth() {
             errorEl.textContent = 'Username already exists!';
             return;
         }
-        // Generate display name: username + number
         const existingCount = currentUsers.filter(u => u.displayName && u.displayName.startsWith(username)).length;
         const displayName = username + (existingCount > 0 ? (existingCount + 1) : '');
         currentUsers.push({ username, password, displayName, isAdmin: false });
@@ -334,7 +345,6 @@ async function handleAuth() {
         return;
     }
 
-    // Login
     const user = currentUsers.find(u => u.username === username && u.password === password);
     if (!user) {
         errorEl.textContent = 'Invalid username or password!';
@@ -345,7 +355,6 @@ async function handleAuth() {
     showChatInterface(user);
 }
 
-// ========== LOGOUT ==========
 function logout() {
     loggedInUser = null;
     localStorage.removeItem('loggedInUser');
@@ -362,7 +371,6 @@ function logout() {
     dispM();
 }
 
-// ========== SHOW CHAT ==========
 function showChatInterface(user) {
     document.getElementById('authBox').style.display = 'none';
     document.getElementById('chatInterface').classList.add('active');
@@ -390,15 +398,20 @@ async function loadMessages() {
     msgs = data.messages || [];
 }
 
-// ========== ENCRYPTION ==========
+// ========== ENCRYPTION FUNCTIONS ==========
 function isKey(){return key && key.length > 0}
 async function enc(t){if(!key)return{encrypted:t,iv:null};try{const e=new TextEncoder(),k=await crypto.subtle.importKey('raw',e.encode(key.padEnd(32,' ').slice(0,32)),{name:'AES-GCM'},!1,['encrypt','decrypt']),iv=crypto.getRandomValues(new Uint8Array(12)),enc=await crypto.subtle.encrypt({name:'AES-GCM',iv},k,e.encode(t)),ea=new Uint8Array(enc),iva=new Uint8Array(iv);return{encrypted:btoa(String.fromCharCode(...ea)),iv:btoa(String.fromCharCode(...iva))}}catch(e){return{encrypted:t,iv:null}}}
 async function dec(e,i){if(!key||!i)return e;try{const en=new TextEncoder(),k=await crypto.subtle.importKey('raw',en.encode(key.padEnd(32,' ').slice(0,32)),{name:'AES-GCM'},!1,['encrypt','decrypt']),eb=Uint8Array.from(atob(e),c=>c.charCodeAt(0)),ib=Uint8Array.from(atob(i),c=>c.charCodeAt(0)),d=await crypto.subtle.decrypt({name:'AES-GCM',iv:ib},k,eb);return new TextDecoder().decode(d)}catch(e){return'🔒 [Encrypted - wrong key?]'}}
 
-function setEncryptionKey(){const i=document.getElementById('encryptKeyInput'),k=i.value.trim(),h=document.getElementById('encryptHintInput').value.trim();if(!k){document.getElementById('encryptStatus').textContent='❌ Enter key!';return}key=k;localStorage.setItem('e2ee_key',k);if(h){hint=h;localStorage.setItem('e2ee_hint',h)}document.getElementById('encryptStatus').textContent='✅ Key set!';document.getElementById('encryptStatus').style.color='#34c759';document.getElementById('encryptBox').classList.remove('show');if(hint){const d=document.getElementById('keyHintDisplay');d.innerHTML='💡 <strong>Hint:</strong> '+hint;d.style.display='block'}i.value='';document.getElementById('encryptHintInput').value='';enableF();fetchM()}
+function setEncryptionKey(){const i=document.getElementById('encryptKeyInput'),k=i.value.trim(),h=document.getElementById('encryptHintInput').value.trim();if(!k){document.getElementById('encryptStatus').textContent='❌ Enter key!';document.getElementById('encryptStatus').style.color='#ff3b30';return}key=k;localStorage.setItem('e2ee_key',k);if(h){hint=h;localStorage.setItem('e2ee_hint',h)}document.getElementById('encryptStatus').textContent='✅ Key set!';document.getElementById('encryptStatus').style.color='#34c759';document.getElementById('encryptBox').classList.remove('show');if(hint){const d=document.getElementById('keyHintDisplay');d.innerHTML='💡 <strong>Hint:</strong> '+hint;d.style.display='block'}i.value='';document.getElementById('encryptHintInput').value='';enableF();fetchM()}
+
 function enableF(){document.querySelectorAll('.user-btn').forEach(b=>b.classList.remove('disabled'));document.getElementById('chatInput').disabled=!1;document.getElementById('chatInput').placeholder='Type a message...';document.querySelector('.input-area button').disabled=!1;showS('🔓 Active','success');dispM()}
-function disableF(){document.querySelectorAll('.user-btn').forEach(b=>b.classList.add('disabled'));document.getElementById('chatInput').disabled=!0;document.getElementById('chatInput').placeholder='🔒 Set key (🔑)';document.querySelector('.input-area button').disabled=!0;document.getElementById('chatBox').innerHTML='<div class="key-required-banner"><div style="font-size:48px;margin-bottom:12px">🔒</div><strong>Encryption Key Required</strong><p style="margin-top:8px;color:#aaa;font-size:14px">Click <strong>🔑</strong> to set your key.</p>'+(hint?'<p style="margin-top:12px;color:#fffc00;font-size:13px">💡 Hint: '+hint+'</p>':'')+'</div>';document.getElementById('msgCount').textContent='🔒 Locked'}
+function disableF(){document.querySelectorAll('.user-btn').forEach(b=>b.classList.add('disabled'));document.getElementById('chatInput').disabled=!0;document.getElementById('chatInput').placeholder='🔒 Set encryption key (🔑)';document.querySelector('.input-area button').disabled=!0;document.getElementById('chatBox').innerHTML='<div class="key-required-banner"><div style="font-size:48px;margin-bottom:12px">🔒</div><strong>Encryption Key Required</strong><p style="margin-top:8px;color:#aaa;font-size:14px">Click <strong>🔑</strong> to set your key.</p>'+(hint?'<p style="margin-top:12px;color:#fffc00;font-size:13px">💡 Hint: '+hint+'</p>':'')+'</div>';document.getElementById('msgCount').textContent='🔒 Locked'}
+
 function toggleEncrypt(){const b=document.getElementById('encryptBox');b.classList.toggle('show');if(b.classList.contains('show')){document.getElementById('encryptKeyInput').focus();if(hint){const d=document.getElementById('keyHintDisplay');d.innerHTML='💡 <strong>Hint:</strong> '+hint;d.style.display='block'}else document.getElementById('keyHintDisplay').style.display='none'}}
+
+function exportKey(){if(!key){alert('❌ No key!');return}const d={key:key,hint:hint||'',exportedAt:new Date().toISOString()},b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='chat_key_backup.json';a.click();URL.revokeObjectURL(u);document.getElementById('encryptStatus').textContent='✅ Exported!';document.getElementById('encryptStatus').style.color='#34c759'}
+function importKey(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=function(e){try{const d=JSON.parse(e.target.result);if(d.key){key=d.key;localStorage.setItem('e2ee_key',d.key);if(d.hint){hint=d.hint;localStorage.setItem('e2ee_hint',d.hint)}document.getElementById('encryptStatus').textContent='✅ Imported!';document.getElementById('encryptStatus').style.color='#34c759';document.getElementById('encryptBox').classList.remove('show');if(hint){const hd=document.getElementById('keyHintDisplay');hd.innerHTML='💡 <strong>Hint:</strong> '+hint;hd.style.display='block'}enableF();fetchM()}else{document.getElementById('encryptStatus').textContent='❌ Invalid file!';document.getElementById('encryptStatus').style.color='#ff3b30'}}catch(err){document.getElementById('encryptStatus').textContent='❌ Error reading file!';document.getElementById('encryptStatus').style.color='#ff3b30'}};r.readAsText(f);e.target.value=''}
 
 // ========== CHAT FUNCTIONS ==========
 function toggleBroadcast(){if(!adm){showS('❌ Admin login!','error');return}const b=document.getElementById('broadcastBox');b.classList.toggle('show');if(b.classList.contains('show')){document.getElementById('broadcastInput').focus();document.getElementById('broadcastStatus').textContent=''}}
